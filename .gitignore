@@ -2,4 +2,5 @@
 *.gz
 *.csv
 .vscode
+__pycache__
 MICCAI_BraTS2020_TrainingData.zip
