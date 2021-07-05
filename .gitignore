@@ -2,3 +2,4 @@
 *.gz
 *.csv
 .vscode
+MICCAI_BraTS2020_TrainingData.zip
