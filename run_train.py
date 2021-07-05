@@ -22,7 +22,7 @@ def process_args(arguments):
     parser = argparse.ArgumentParser(
         description='non-negative / unbiased PU learning Chainer implementation',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--rootdir', '-r', type=str, default="MICCAI_BraTS2020_TrainingData",
+    parser.add_argument('--rootdir', '-r', type=str, default="/storage/homefs/cp14h011/unet-nnpu-brats2020/MICCAI_BraTS2020_TrainingData",
                         help='Root directory of the BraTS2020')
     parser.add_argument('--batchsize', '-b', type=int, default=64,
                         help='Mini batch size')
@@ -51,7 +51,7 @@ def process_args(arguments):
     #                     help='The name of a classification model')
     parser.add_argument('--stepsize', '-s', default=1e-4, type=float,
                         help='Stepsize of gradient method')
-    parser.add_argument('--out', '-o', default='result',
+    parser.add_argument('--out', '-o', default='/storage/homefs/cp14h011/results',
                         help='Directory to output the result')
 
     args = parser.parse_args(arguments)
