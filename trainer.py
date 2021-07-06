@@ -53,7 +53,7 @@ class Trainer:
       from tqdm import tqdm, trange
     
     # progressbar = trange(self.epochs, desc='Progress', leave= False)
-    for i in self.epochs:
+    for i in range(self.epochs):
       """Epoch Counter"""
       self.epoch += 1
 
