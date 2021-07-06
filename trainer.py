@@ -65,8 +65,8 @@ class Trainer:
         self._validate()
 
       """Print Status"""
-      to_print = 'Epoch: {}/{}\ttrain_loss: {}\ttrain_dice: {}\tvalid_loss: {}\tvalid_dice: {}'
-      print(to_print.format(i, self.epochs, self.train_loss, self.train_dice_coef, self.valid_loss, self.valid_dice_coef))
+      to_print = 'Epoch: {}/{}\ttrain_loss: {}\ttrain_dice_coef: {}\tvalid_loss: {}\tvalid_dice_coef: {}'
+      print(to_print.format(self.epoch, self.epochs, self.train_loss[-1], self.train_dice_coef[-1], self.valid_loss[-1], self.valid_dice_coef[-1]))
 
       """Learning rate scheduler block"""
       if self.lr_scheduler is not None:

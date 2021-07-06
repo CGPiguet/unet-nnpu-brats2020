@@ -47,7 +47,7 @@ def split_data(list_dir: list, ratio: float = 0.8):
         else:
             list_train.append(folder_path)
 
-    to_print= '\tTotal:\t{}\n\tRatio:\t{}\n\t#train:\t{}\n\t#valid:\t{} '
+    to_print= '\t\tTotal:\t{}\n\t\tRatio:\t{}\n\t\t#train:\t{}\n\t\t#valid:\t{} '
     print(to_print.format(len(list_dir),ratio, len(list_train),len(list_valid)))
 
     return list_train, list_valid
@@ -238,22 +238,22 @@ def preprocess_brats2020(root_dir: str, ratio_train_valid: float = 0.8, ratio_P_
         train_data, valid_data: train and validation dataset.
     """
 
-    print("\nPreprocessing\n")
-    print('\n\tStep 1.\tGet subject folder path from the root')
+    print("\nPreprocessing")
+    print('\tStep 1.\tGet subject folder path from the root')
     folder_path = get_subfolder(root_dir)
 
-    print('\n\tStep 2.\tSplit data for train and valid dataset')
+    print('\tStep 2.\tSplit data for train and valid dataset')
     train_subjects, valid_subjects = split_data(folder_path, ratio_train_valid)
     
-    print('\n\tStep 3.\tGet img mode from all subject/folder')
+    print('\tStep 3.\tGet img mode from all subject/folder')
     train_list = get_img_path_from_folder(train_subjects)
     valid_list = get_img_path_from_folder(valid_subjects)
     
-    print('\n\tStep 4.\tGet which slice is unhealthy')
+    print('\tStep 4.\tGet which slice is unhealthy')
     unhealthy_train_slice = get_unhealthy_slice(train_list)
     unhealthy_valid_slice = get_unhealthy_slice(valid_list)
     
-    print('\n\tStep 5.\tSlice 3D to 2D in prevision of torch.Dataset')
+    print('\tStep 5.\tSlice 3D to 2D in prevision of torch.Dataset')
     train_data = Slice3Dto2D(train_list, unhealthy_train_slice, ratio_P_to_U)
     valid_data = Slice3Dto2D(valid_list, unhealthy_valid_slice, ratio_P_to_U)
 
