@@ -104,8 +104,8 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize):
         valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
 
     prior = train_dataset.get_prior() if dataloader_preset == "nnPU" else None
-    print(train_dataset[0]['img'].shape, train_dataset[0]['img'].dtype, train_dataset[0]['img'].type())
-    print(train_dataset[0]['target'].shape, train_dataset[0]['target'].dtype, train_dataset[0]['target'].type())
+    print('IMG status:', train_dataset[0]['img'].shape, train_dataset[0]['img'].dtype, train_dataset[0]['img'].type())
+    print('SEG status:', train_dataset[0]['target'].shape, train_dataset[0]['target'].dtype, train_dataset[0]['target'].type())
 
 
     return train_dataloader, valid_dataloader, prior
