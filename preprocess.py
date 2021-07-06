@@ -100,8 +100,8 @@ def get_unhealthy_slice(data: list):
 
     unhealthy_dict  = {}
 
-    progressbar = tqdm(data, desc='Get Unhealhty Slice',total= len(data), leave= True, position=0)
-    for subject_dict in progressbar:
+    # progressbar = tqdm(data, desc='Get Unhealhty Slice',total= len(data), leave= True, position=0)
+    for subject_dict in data:
         # Loop through all subject 
         unhealthy_slice = []
         target_path     = subject_dict['Seg']
@@ -123,7 +123,7 @@ def get_unhealthy_slice(data: list):
         unhealthy_dict.update(dict({
             subject_id: np.array((min, max))
         }))
-        progressbar.update()
+        # progressbar.update()
 
     return unhealthy_dict
 
@@ -152,11 +152,11 @@ def Slice3Dto2D(data_list: list, unhealthy_slice_list: list, ratio_P_to_U: float
     input   = []
     target  = {}
 
-    progressbar = tqdm(data_list, 'Subject', total=len(data_list), leave= True, position=0)
-    for data in progressbar:      
+    # progressbar = tqdm(data_list, 'Subject', total=len(data_list), leave= True, position=0)
+    for data in data_list:      
         data_copy       = data.copy()
         subject_id      = data_copy.pop('id')
-        progressbar.set_description(f'{subject_id}')
+        # progressbar.set_description(f'{subject_id}')
 
         segmentation    = data_copy.pop('Seg')
 
@@ -185,7 +185,7 @@ def Slice3Dto2D(data_list: list, unhealthy_slice_list: list, ratio_P_to_U: float
             'unhealthy_slice': unhealthy_slice
             })
         }))
-        progressbar.update()
+        # progressbar.update()
 
     return (input, target)
 

@@ -52,8 +52,8 @@ class Trainer:
     else:
       from tqdm import tqdm, trange
     
-    progressbar = trange(self.epochs, desc='Progress', leave= False)
-    for i in progressbar:
+    # progressbar = trange(self.epochs, desc='Progress', leave= False)
+    for i in self.epochs:
       """Epoch Counter"""
       self.epoch += 1
 
@@ -70,7 +70,7 @@ class Trainer:
             self.lr_scheduler.batch(self.validation_loss[i])  # learning rate scheduler step with validation loss
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
-    progressbar.close()
+    # progressbar.close()
 
   def _train(self):
 
@@ -83,10 +83,10 @@ class Trainer:
     train_losses    = []  # accumulate the losses here
     dice_coefficient = []
 
-    batch_iter = tqdm(enumerate(self.train_Dataloader), 'Training', total=len(self.train_Dataloader),
-                      leave= True, position= 0 )
+    # batch_iter = tqdm(enumerate(self.train_Dataloader), 'Training', total=len(self.train_Dataloader),
+    #                   leave= True, position= 0 )
 
-    for i, data in batch_iter:
+    for i, data in enumerate(self.train_Dataloader):
       input, target = data['img'], data['target']
 
       input, target = input.to(self.device), target.to(self.device) # Send to device (GPU or CPU)
@@ -105,14 +105,14 @@ class Trainer:
       # Dice Coefficient
       dice_coefficient.append(self._dice_coef(output, target))
 
-      batch_iter.set_description(f'Training: (loss {loss_value:.4f})')  # update progressbar
-      batch_iter.update()
+      # batch_iter.set_description(f'Training: (loss {loss_value:.4f})')  # update progressbar
+      # batch_iter.update()
 
     self.train_loss.append(np.mean(np.array(train_losses)))
     self.train_dice_coef.append(np.mean(dice_coefficient))
     self.learning_rate.append(self.optimizer.param_groups[0]['lr'])
 
-    batch_iter.close()
+    # batch_iter.close()
     
   def _validate(self):
     if self.notebook:
@@ -122,12 +122,12 @@ class Trainer:
 
     self.model.eval() # evaluation mode
     valid_losses = [] # accumulate the losses here
-    batch_iter = tqdm(enumerate(self.valid_Dataloader), 'Validation', total=len(self.valid_Dataloader),
-                      leave= True, position= 0)
-    
     dice_coefficient = []
+
+    # batch_iter = tqdm(enumerate(self.valid_Dataloader), 'Validation', total=len(self.valid_Dataloader),
+    #                   leave= True, position= 0)
     
-    for i, data in batch_iter:
+    for i, data in enumerate(self.valid_Dataloader):
       input, target = data['img'], data['target']
       input, target = input.to(self.device), target.to(self.device) # Send to device (GPU or CPU)
 
@@ -141,13 +141,13 @@ class Trainer:
         # Dice Coefficient
         dice_coefficient.append(self._dice_coef(output, target))
 
-        batch_iter.set_description(f'Validation: (loss {loss_value:.4f})')
-        batch_iter.update()
+        # batch_iter.set_description(f'Validation: (loss {loss_value:.4f})')
+        # batch_iter.update()
       
     self.valid_loss.append(np.mean(np.array(valid_losses)))
     self.valid_dice_coef.append(np.mean(dice_coefficient))
 
-    batch_iter.close()
+    # batch_iter.close()
 
   def plot_loss(self, to_save= False):
     plt.figure(figsize=(8, 6), dpi=100)
