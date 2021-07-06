@@ -64,6 +64,10 @@ class Trainer:
       if self.valid_Dataloader is not None:
         self._validate()
 
+      """Print Status"""
+      to_print = 'Epoch: {}/{}\ttrain_loss: {}\ttrain_dice: {}\tvalid_loss: {}\tvalid_dice: {}'
+      print(to_print.format(i, self.epochs, self.train_loss, self.train_dice_coef, self.valid_loss, self.valid_dice_coef))
+
       """Learning rate scheduler block"""
       if self.lr_scheduler is not None:
         if self.valid_DataLoader is not None and self.lr_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
