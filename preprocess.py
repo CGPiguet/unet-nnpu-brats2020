@@ -253,7 +253,7 @@ def preprocess_brats2020(root_dir: str, ratio_train_valid: float = 0.8, ratio_P_
     unhealthy_train_slice = get_unhealthy_slice(train_list)
     unhealthy_valid_slice = get_unhealthy_slice(valid_list)
     
-    print('\tStep 5.\tSlice 3D to 2D in prevision of torch.Dataset')
+    print('\tStep 5.\tSlice 3D to 2D in prevision of torch.Dataset\n')
     train_data = Slice3Dto2D(train_list, unhealthy_train_slice, ratio_P_to_U)
     valid_data = Slice3Dto2D(valid_list, unhealthy_valid_slice, ratio_P_to_U)
 
