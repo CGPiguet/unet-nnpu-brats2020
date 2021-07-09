@@ -75,6 +75,8 @@ class Trainer:
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
     # progressbar.close()
+    model_name = 'model_saved_'+ self.name
+    torch.save(self.model.state_dict(),model_name)
 
   def _train(self):
 
