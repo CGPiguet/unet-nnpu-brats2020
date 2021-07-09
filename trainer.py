@@ -92,8 +92,8 @@ class Trainer:
 
     for i, data in enumerate(self.train_Dataloader):
       input, target = data['img'], data['target']
-
       input, target = input.to(self.device), target.to(self.device) # Send to device (GPU or CPU)
+      input, target = input.squeeze(), target.squeeze()
 
       self.optimizer.zero_grad() # Set grad to zero
       
@@ -134,6 +134,7 @@ class Trainer:
     for i, data in enumerate(self.valid_Dataloader):
       input, target = data['img'], data['target']
       input, target = input.to(self.device), target.to(self.device) # Send to device (GPU or CPU)
+      input, target = input.squeeze(), target.squeeze()
 
       with torch.no_grad():
         output      = self.model(input)

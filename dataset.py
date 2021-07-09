@@ -133,15 +133,14 @@ class PU_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
 
     def get_prior(self) -> float:
         subject = []
-        for img_dict in tqdm(self.inputs):
+        for img_dict in self.inputs:
             subject_id= img_dict['id']
             if subject_id not in subject:
-                subject.append(id)
+                subject.append(subject_id)
 
         # Count the number of positive pixel for prior
         nb_positive_pixel = 0
         total_pixel = 0
-
         for subj in subject:
             target  = self.targets[subj]
 
@@ -153,7 +152,7 @@ class PU_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
             img_vol_unhealthy   = img_vol[slice_min:slice_max,:,:]
 
             nb_p    = np.count_nonzero(img_vol_unhealthy> 0)
-            total   = img_vol_unhealthy.size()
+            total   = img_vol_unhealthy.size
 
             nb_positive_pixel   += nb_p
             total_pixel         += total
@@ -218,6 +217,7 @@ class BCE_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
         self.targets     = data_list[1]
         
         self.transforms  = transforms
+        
 
     def __len__(self) -> int:
         return len(self.inputs)

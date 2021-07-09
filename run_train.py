@@ -93,8 +93,8 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize):
     ])
 
     if dataloader_preset == "nnPU":
-        train_dataset       = PU_BraTS2020_Dataset(train_data, transforms== transforms)
-        valid_dataset       = PN_BraTS2020_Dataset(valid_data, transforms== transforms)
+        train_dataset       = PU_BraTS2020_Dataset(train_data, transforms= transforms)
+        valid_dataset       = PN_BraTS2020_Dataset(valid_data, transforms= transforms)
         train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs),
         valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
     elif dataloader_preset == "BCELoss":
