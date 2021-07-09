@@ -53,6 +53,8 @@ def process_args(arguments):
                         help='Stepsize of gradient method')
     parser.add_argument('--out', '-o', default='/storage/homefs/cp14h011/results',
                         help='Directory to output the result')
+    parser.add_argument('--validation', '-v', default=True,
+                        help='Use of a validation dataset')
 
     args = parser.parse_args(arguments)
     if args.preset == "nnPU":
@@ -78,7 +80,7 @@ def select_loss(loss_name, prior):
     return loss_fn
 
 
-def select_dataloader(train_data, valid_data, dataloader_preset, batchsize):
+def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation):
     kwargs = {'num_workers': 1, 'pin_memory': True} if torch.cuda.is_available() else {}
 
     transforms = Compose([
@@ -93,15 +95,23 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize):
     ])
 
     if dataloader_preset == "nnPU":
-        train_dataset       = PU_BraTS2020_Dataset(train_data, transforms= transforms)
-        valid_dataset       = PN_BraTS2020_Dataset(valid_data, transforms= transforms)
-        train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs),
-        valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
+        train_dataset       = PU_BraTS2020_Dataset(train_data, transforms= transforms)  
+        train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs)     
+        if is_validation:
+            valid_dataset       = PN_BraTS2020_Dataset(valid_data, transforms= transforms)
+            valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
+        else:
+            valid_dataloader = None
     elif dataloader_preset == "BCELoss":
         train_dataset       = BCE_BraTS2020_Dataset(train_data, transforms= transforms)
-        valid_dataset       = BCE_BraTS2020_Dataset(valid_data, transforms= transforms)
-        train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs)
-        valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
+        train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs)       
+        if is_validation:
+            valid_dataset       = BCE_BraTS2020_Dataset(valid_data, transforms= transforms)
+            valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
+        else:
+            valid_dataloader = None
+    else:
+        raise ValueError('Unidentified preset has been chosen ')
 
     prior = train_dataset.get_prior() if dataloader_preset == "nnPU" else None
     print('IMG status:', train_dataset[0]['img'].shape, train_dataset[0]['img'].dtype, train_dataset[0]['img'].type())
@@ -128,7 +138,7 @@ def run_trainer(arguments):
 
     train_data, valid_data = preprocess_brats2020(root_dir=args.rootdir, ratio_train_valid= 0.8, ratio_P_to_U= 0.95)
 
-    train_dataloader, valid_dataloader, prior = select_dataloader(train_data, valid_data, args.preset, args.batchsize)
+    train_dataloader, valid_dataloader, prior = select_dataloader(train_data, valid_data, args.preset, args.batchsize, args.validation)
 
 
     model       = unet().to(args.device)
