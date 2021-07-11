@@ -74,9 +74,10 @@ class Trainer:
             self.lr_scheduler.batch(self.validation_loss[i])  # learning rate scheduler step with validation loss
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
+      model_name = 'model_saved_'+ self.name +'_epoch_' + self.epoch
+      torch.save(self.model.state_dict(),model_name)
     # progressbar.close()
-    model_name = 'model_saved_'+ self.name
-    torch.save(self.model.state_dict(),model_name)
+
 
   def _train(self):
 
@@ -95,21 +96,20 @@ class Trainer:
     for i, data in enumerate(self.train_Dataloader):
       input, target = data['img'], data['target']
       input, target = input.to(self.device), target.to(self.device) # Send to device (GPU or CPU)
-      input, target = input.squeeze(), target.squeeze()
 
       self.optimizer.zero_grad() # Set grad to zero
       
       output  = self.model(input) # One forward pass 
-      output  = output.squeeze()
 
-      loss          = self.criterion(output, target) # Calculate loss
+      loss          = self.criterion(output.squeeze(), target.squeeze()) # Calculate loss
       loss_value    = loss.item()
+
       train_losses.append(loss_value)
       loss.backward() # one backward pass
       self.optimizer.step() # update the parameters
 
       # Dice Coefficient
-      dice_coefficient.append(self._dice_coef(output, target))
+      dice_coefficient.append(self._dice_coef(output.squeeze(), target.squeeze()))
 
       # batch_iter.set_description(f'Training: (loss {loss_value:.4f})')  # update progressbar
       # batch_iter.update()
@@ -136,17 +136,17 @@ class Trainer:
     for i, data in enumerate(self.valid_Dataloader):
       input, target = data['img'], data['target']
       input, target = input.to(self.device), target.to(self.device) # Send to device (GPU or CPU)
-      input, target = input.squeeze(), target.squeeze()
+      # input, target = input.squeeze(), target.squeeze()
 
       with torch.no_grad():
         output      = self.model(input)
-        output      = output.squeeze()
-        loss        = self.criterion(output, target)
+
+        loss        = self.criterion(output.squeeze(), target.squeeze())
         loss_value  = loss.item()
         valid_losses.append(loss_value)
         
         # Dice Coefficient
-        dice_coefficient.append(self._dice_coef(output, target))
+        dice_coefficient.append(self._dice_coef(output.squeeze(), target.squeeze()))
 
         # batch_iter.set_description(f'Validation: (loss {loss_value:.4f})')
         # batch_iter.update()
@@ -192,6 +192,8 @@ class Trainer:
       plt.savefig(path)
 
   def _dice_coef(self, output, target, smooth= 1):
+    assert(output.shape == target.shape)
+
     dice_output = torch.where(output>0, 1, 0)
     dice_target = torch.where(target>0, 1, 0)
 
