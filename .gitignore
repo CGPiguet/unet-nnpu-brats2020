@@ -3,6 +3,7 @@
 *.csv
 .vscode
 __pycache__
+.ipynb_checkpoints
 MICCAI_BraTS2020_TrainingData.zip
 dummy_test.ipynb
 *.txt
