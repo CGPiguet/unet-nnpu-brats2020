@@ -74,7 +74,7 @@ class Trainer:
             self.lr_scheduler.batch(self.validation_loss[i])  # learning rate scheduler step with validation loss
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
-      model_name = 'model_saved_'+ self.name +'_epoch_' + self.epoch
+      model_name = 'model_saved_'+ self.name +'_epoch_' + str(self.epoch)
       torch.save(self.model.state_dict(),model_name)
     # progressbar.close()
 
