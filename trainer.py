@@ -74,8 +74,17 @@ class Trainer:
             self.lr_scheduler.batch(self.validation_loss[i])  # learning rate scheduler step with validation loss
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
-      model_name = 'model_saved_'+ self.name +'_epoch_' + str(self.epoch)
+
+      """Save Model"""         
+      model_name = '/model_saved_'+ self.name +'/' +'epoch_' + str(self.epoch)
       torch.save(self.model.state_dict(),model_name)
+      
+      if os.path.exists('/model_saved_'+ self.name +'/' +'epoch_' + str(self.epoch-5)):
+        if not '/model_saved_'+ self.name +'/' +'epoch_' + str(1):
+          os.remove('/model_saved_'+ self.name +'/' +'epoch_' + str(self.epoch-5))
+
+
+
     # progressbar.close()
 
 

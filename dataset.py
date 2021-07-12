@@ -13,66 +13,66 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToPILImage, Resize, ToTensor, Normalize, Compose
 
 class BraTS2020_Dataset(Dataset):
-  def get_lengths(self) -> None:
+    def get_lengths(self) -> None:
         print('len(data): ', len(self.inputs))
         print('len(targets): ', len(self.targets))
 
-  def show_PU_target(self, index: int)-> None:
-      input       = self.inputs[index]
-      subject_id  = input['id']
-      img_path    = input['img_path']
-      slice_id    = input['slice']
-      mode        = input['mode']
+    def show_PU_target(self, index: int)-> None:
+        input       = self.inputs[index]
+        subject_id  = input['id']
+        img_path    = input['img_path']
+        slice_id    = input['slice']
+        mode        = input['mode']
 
-      target          = self.targets[subject_id]
-      p_coordinate    = target['P_coordinate']
-      
-      img = sitk.GetArrayFromImage(sitk.ReadImage(img_path))
-              
-      # Only slice that contains unhealhty
-      img_slice   = img[slice_id,:,:]
-      seg = -1*torch.ones((img_slice.shape[0], img_slice.shape[1]), dtype= torch.float32)
+        target          = self.targets[subject_id]
+        p_coordinate    = target['P_coordinate']
+        
+        img = sitk.GetArrayFromImage(sitk.ReadImage(img_path))
+                
+        # Only slice that contains unhealhty
+        img_slice   = img[slice_id,:,:]
+        seg = -1*torch.ones((img_slice.shape[0], img_slice.shape[1]), dtype= torch.float32)
 
-      # Get Positive pixel coordinate
-      p_pixel_index   = np.where(p_coordinate[0] == slice_id)
+        # Get Positive pixel coordinate
+        p_pixel_index   = np.where(p_coordinate[0] == slice_id)
 
-      if len(p_pixel_index) != 0:               
-          for p_index in p_pixel_index:
-              y,x         = p_coordinate[1][p_index], p_coordinate[2][p_index]
-              seg[y,x]    = 1    
+        if len(p_pixel_index) != 0:               
+            for p_index in p_pixel_index:
+                y,x         = p_coordinate[1][p_index], p_coordinate[2][p_index]
+                seg[y,x]    = 1    
 
-      print(subject_id, slice_id)
-      plt.imshow(seg)
+        print(subject_id, slice_id)
+        plt.imshow(seg)
 
-  def show_PN_target(self, index:int)-> None:
-      input        = self.inputs[index]
-      subject_id   = input['id']
-      slice_id     = input['slice']
+    def show_PN_target(self, index:int)-> None:
+        input        = self.inputs[index]
+        subject_id   = input['id']
+        slice_id     = input['slice']
 
-      target       = self.targets[subject_id]
-      seg_path     = target['seg_path']
-      
-      seg          = sitk.GetArrayFromImage(sitk.ReadImage(seg_path))
-      seg_slice    = seg[slice_id,:,:]
+        target       = self.targets[subject_id]
+        seg_path     = target['seg_path']
+        
+        seg          = sitk.GetArrayFromImage(sitk.ReadImage(seg_path))
+        seg_slice    = seg[slice_id,:,:]
 
-      seg_bin = np.where(seg_slice>0, 1, -1)
+        seg_bin = np.where(seg_slice>0, 1, -1)
 
-      print(subject_id, slice_id)
-      plt.imshow(seg_bin)
+        print(subject_id, slice_id)
+        plt.imshow(seg_bin)
 
 
-  def show_img(self, index: int)-> None:
-      input       = self.inputs[index]
-      subject_id  = input['id']
-      img_path    = input['img_path']
-      slice_id    = input['slice']
-      mode        = input['mode']
-      
-      img = sitk.GetArrayFromImage(sitk.ReadImage(img_path))
-      img_slice = img[slice_id,:,:]
+    def show_img(self, index: int)-> None:
+        input       = self.inputs[index]
+        subject_id  = input['id']
+        img_path    = input['img_path']
+        slice_id    = input['slice']
+        mode        = input['mode']
+        
+        img = sitk.GetArrayFromImage(sitk.ReadImage(img_path))
+        img_slice = img[slice_id,:,:]
 
-      print(subject_id, slice_id, mode)
-      plt.imshow(img_slice)
+        print(subject_id, slice_id, mode)
+        plt.imshow(img_slice)
 
 
 class PU_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
@@ -216,8 +216,7 @@ class BCE_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
         self.inputs      = data_list[0]
         self.targets     = data_list[1]
         
-        self.transforms  = transforms
-        
+        self.transforms  = transforms        
 
     def __len__(self) -> int:
         return len(self.inputs)
@@ -259,6 +258,33 @@ class BCE_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
             'unhealthy_slice': unhealthy_slice,
         })
         return data
+
+    def get_prior(self) -> float:
+        subject = []
+        for img_dict in self.inputs:
+            subject_id= img_dict['id']
+            if subject_id not in subject:
+                subject.append(subject_id)
+
+        # Count the number of positive pixel for prior
+        nb_positive_pixel = 0
+        total_pixel = 0
+        for subj in subject:
+            target  = self.targets[subj]
+
+            seg                     = target['seg_path']
+
+            img_vol             = sitk.GetArrayFromImage(sitk.ReadImage(seg))
+
+            nb_p    = np.count_nonzero(img_vol> 0)
+            total   = img_vol.size
+
+            nb_positive_pixel   += nb_p
+            total_pixel         += total
+
+        prior = torch.tensor(nb_positive_pixel/total_pixel, dtype= torch.float)
+
+        return prior
 
 # def get_PU_dataloader(train_data, valid_data, device):
 #     kwargs = {'num_workers': 1, 'pin_memory': True} if torch.cuda.is_available() else {}

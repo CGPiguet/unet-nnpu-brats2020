@@ -24,6 +24,8 @@ def process_args(arguments):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--rootdir', '-r', type=str, default="MICCAI_BraTS2020_TrainingData",
                         help='Root directory of the BraTS2020')
+    parser.add_argument('--name', '-n', type=str, default=None,
+                        help='Name of the job/training.')
     parser.add_argument('--batchsize', '-b', type=int, default=64,
                         help='Mini batch size')
     parser.add_argument('--device', '-d', type=torch.device, default= torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
@@ -57,7 +59,9 @@ def process_args(arguments):
                         help='Use of a validation dataset')
 
     args = parser.parse_args(arguments)
-    if args.preset == "nnPU":
+    if args.name == None:
+        args.name = args.preset
+    if args.preset == "nnPULoss":
         args.loss = "nnPULoss"
 
     elif args.preset == "BCELoss":
@@ -81,7 +85,7 @@ def select_loss(loss_name, prior):
 
 
 def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation):
-    kwargs = {'num_workers': 1, 'pin_memory': True} if torch.cuda.is_available() else {}
+    kwargs = {'num_workers': 8, 'pin_memory': True} if torch.cuda.is_available() else {}
 
     transforms = Compose([
     ToTensor(), # https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.ToTensor
@@ -94,7 +98,7 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
     # Normalize(mean=(0.5,), std=(0.5,)),    
     ])
 
-    if dataloader_preset == "nnPU":
+    if dataloader_preset == "nnPULoss":
         train_dataset       = PU_BraTS2020_Dataset(train_data, transforms= transforms)  
         train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs)     
         if is_validation:
@@ -113,7 +117,7 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
     else:
         raise ValueError('Unidentified preset has been chosen ')
 
-    prior = train_dataset.get_prior() if dataloader_preset == "nnPU" else None
+    prior = train_dataset.get_prior() #if dataloader_preset == "nnPU" else None
     print('IMG status:', train_dataset[0]['img'].shape, train_dataset[0]['img'].dtype, train_dataset[0]['img'].type())
     print('SEG status:', train_dataset[0]['target'].shape, train_dataset[0]['target'].dtype, train_dataset[0]['target'].type())
 
@@ -122,6 +126,8 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
 
 
 def print_info_before_training(args, prior):
+    print("")
+    print("Name of the Job/training: {}".format )
     print("Device: {}".format(args.device))
     print("Preset: {}".format(args.preset))
     print("prior: {}".format(prior))
@@ -129,6 +135,7 @@ def print_info_before_training(args, prior):
     print("batchsize: {}".format(args.batchsize))
     print("lr: {}".format(args.stepsize))
     print("beta: {}".format(args.beta))
+    print("validation dataset: {}".format(args.validation))
     print("")
 
 
@@ -153,7 +160,7 @@ def run_trainer(arguments):
         'epochs': args.epoch
         }
     print_info_before_training(args, prior)
-    trainer = Trainer(args.preset, model, args.device, **kwargs)
+    trainer = Trainer(args.name, model, args.device, **kwargs)
 
     trainer.run_trainer()
 
