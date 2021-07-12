@@ -6,4 +6,4 @@ __pycache__
 MICCAI_BraTS2020_TrainingData.zip
 dummy_test.ipynb
 *.txt
-
+model_saved_*
