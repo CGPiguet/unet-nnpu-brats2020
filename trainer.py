@@ -45,6 +45,8 @@ class Trainer:
     self.test1            = []
     self.test2            = []
 
+
+
   def run_trainer(self):
 
     if self.notebook:
@@ -66,7 +68,10 @@ class Trainer:
 
       """Print Status"""
       to_print = 'Epoch: {}/{}\ttrain_loss: {}\ttrain_dice_coef: {}\tvalid_loss: {}\tvalid_dice_coef: {}'
-      print(to_print.format(self.epoch, self.epochs, self.train_loss[-1], self.train_dice_coef[-1], self.valid_loss[-1], self.valid_dice_coef[-1]))
+      if self.valid_Dataloader is not None:
+        print(to_print.format(self.epoch, self.epochs, self.train_loss[-1], self.train_dice_coef[-1], self.valid_loss[-1], self.valid_dice_coef[-1]))
+      else:
+        print(to_print.format(self.epoch, self.epochs, self.train_loss[-1], self.train_dice_coef[-1], None, None))
 
       """Learning rate scheduler block"""
       if self.lr_scheduler is not None:
@@ -75,13 +80,18 @@ class Trainer:
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
 
-      """Save Model"""         
-      model_name = '/model_saved_'+ self.name +'/' +'epoch_' + str(self.epoch)
-      torch.save(self.model.state_dict(),model_name)
+      """Save Model""" 
+
+      folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_'+ self.name
+      file_name   = 'epoch_'
+      if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+
+      torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)))
       
-      if os.path.exists('/model_saved_'+ self.name +'/' +'epoch_' + str(self.epoch-5)):
-        if not '/model_saved_'+ self.name +'/' +'epoch_' + str(1):
-          os.remove('/model_saved_'+ self.name +'/' +'epoch_' + str(self.epoch-5))
+      if os.path.exists(os.path.join(folder_name, file_name+ str(self.epoch-3))):
+        if not os.path.join(folder_name, file_name+ str(1)):
+          os.remove(os.path.join(folder_name, file_name+ str(self.epoch-3)))
 
 
 
