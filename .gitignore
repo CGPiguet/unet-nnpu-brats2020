@@ -9,3 +9,4 @@ dummy_test.ipynb
 *.txt
 model_saved_*
 *.sh
+download_BraTS2020.py
