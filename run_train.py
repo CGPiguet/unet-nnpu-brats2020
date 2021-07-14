@@ -17,6 +17,7 @@ from dataset import PN_BraTS2020_Dataset, PU_BraTS2020_Dataset, BCE_BraTS2020_Da
 from model import unet
 from nnPULoss import PULoss
 from trainer import Trainer
+from FocalLoss import BinaryFocalLossWithLogits
 
 def process_args(arguments):
     parser = argparse.ArgumentParser(
@@ -31,10 +32,13 @@ def process_args(arguments):
     parser.add_argument('--device', '-d', type=torch.device, default= torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
                         help='Determine the torch device, AutoDetection per default')
     parser.add_argument('--preset', '-p', type=str, default= 'nnPULoss',
-                        choices=['nnPULoss','BCELoss'],
+                        choices=['nnPULoss','BCELoss', 'FocalLoss'],
                         help="Preset of configuration\n"
                              "nnPU: With nnPU criterion\n"
-                             "BCELoss: With BinaryCrossEntropy\n")
+                             "BCELoss: With BinaryCrossEntropy\n"
+                             "FocalLoss: With BinaryCrossEntropy\n")
+    parser.add_argument('--num_worker', '-nw', default=8, type=int,
+                        help='Number of worker in Dataloader')
     # parser.add_argument('--labeled', '-l', default=100, type=int,
     #                     help='# of labeled data')
     # parser.add_argument('--unlabeled', '-u', default=59900, type=int,
@@ -45,7 +49,7 @@ def process_args(arguments):
                         help='Beta parameter of nnPU')
     # parser.add_argument('--gamma', '-G', default=1., type=float,
     #                     help='Gamma parameter of nnPU')
-    parser.add_argument('--loss', type=str, default="nnPULoss", choices=['nnPULoss', 'BCELoss'],
+    parser.add_argument('--loss', type=str, default="nnPULoss", choices=['nnPULoss', 'BCELoss','FocalLoss'],
                         help='The name of a loss function')
     parser.add_argument('--nnPUloss', type=str, default="sigmoid", choices=['logistic', 'sigmoid'],
                         help='The name of a loss function used in nnPU')
@@ -55,7 +59,7 @@ def process_args(arguments):
                         help='Stepsize of gradient method')
     parser.add_argument('--out', '-o', default='/results/',
                         help='Directory to output the result')
-    parser.add_argument('--validation', '-v', default=True,
+    parser.add_argument('--validation', '-v', default=True, type= str2bool,
                         help='Use of a validation dataset')
 
     args = parser.parse_args(arguments)
@@ -66,6 +70,8 @@ def process_args(arguments):
 
     elif args.preset == "BCELoss":
         args.loss = "BCELoss"
+    elif args.preset =="FocalLoss":
+        args.loss = "FocalLoss"
 
     assert (args.batchsize > 0)
     assert (args.epoch > 0)
@@ -73,7 +79,15 @@ def process_args(arguments):
     # assert (0. <= args.gamma <= 1.)
     return args
 
-
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def select_loss(loss_name, prior):
@@ -81,11 +95,13 @@ def select_loss(loss_name, prior):
         loss_fn = PULoss(prior)
     elif loss_name == "BCELoss":
         loss_fn = nn.BCEWithLogitsLoss()
+    elif loss_name == "FocalLoss":
+        loss_fn = BinaryFocalLossWithLogits(reduction='mean')
     return loss_fn
 
 
-def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation):
-    kwargs = {'num_workers': 8, 'pin_memory': True} if torch.cuda.is_available() else {}
+def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation, num_worker):
+    kwargs = {'num_workers': num_worker, 'pin_memory': True} if torch.cuda.is_available() else {}
 
     transforms = Compose([
     ToTensor(), # https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.ToTensor
@@ -106,7 +122,7 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
             valid_dataloader    = DataLoader(valid_dataset, batch_size= batch_size, shuffle= False, **kwargs)
         else:
             valid_dataloader = None
-    elif dataloader_preset == "BCELoss":
+    elif dataloader_preset == "BCELoss" or "FocalLoss":
         train_dataset       = BCE_BraTS2020_Dataset(train_data, transforms= transforms)
         train_dataloader    = DataLoader(train_dataset, batch_size= batch_size, shuffle= True, **kwargs)       
         if is_validation:
@@ -127,7 +143,7 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
 
 def print_info_before_training(args, prior):
     print("")
-    print("Name of the Job/training: {}".format )
+    print("Name of the Job/training: {}".format(args.name))
     print("Device: {}".format(args.device))
     print("Preset: {}".format(args.preset))
     print("prior: {}".format(prior))
@@ -136,6 +152,7 @@ def print_info_before_training(args, prior):
     print("lr: {}".format(args.stepsize))
     print("beta: {}".format(args.beta))
     print("validation dataset: {}".format(args.validation))
+    print("Num of Workers: {}".format(args.num_worker))
     print("")
 
 
@@ -145,7 +162,7 @@ def run_trainer(arguments):
 
     train_data, valid_data = preprocess_brats2020(root_dir=args.rootdir, ratio_train_valid= 0.8, ratio_P_to_U= 0.95)
 
-    train_dataloader, valid_dataloader, prior = select_dataloader(train_data, valid_data, args.preset, args.batchsize, args.validation)
+    train_dataloader, valid_dataloader, prior = select_dataloader(train_data,valid_data, args.preset, args.batchsize, args.validation, args.num_worker)
 
 
     model       = unet().to(args.device)
