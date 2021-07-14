@@ -1,8 +1,13 @@
 import os
 import numpy as np
-from numpy.core.einsumfunc import _parse_possible_contraction
 from tqdm.auto import tqdm, trange
 import SimpleITK as sitk
+import urllib.request
+import zipfile
+
+from download_BraTS2020 import download_BraTS2020
+
+
 
 
 def get_subfolder(root_dir: str):
@@ -239,6 +244,7 @@ def preprocess_brats2020(root_dir: str, ratio_train_valid: float = 0.8, ratio_P_
     """
 
     print("\nPreprocessing")
+    download_BraTS2020(root_dir)
     print('\tStep 1.\tGet subject folder path from the root')
     folder_path = get_subfolder(root_dir)
 
