@@ -34,11 +34,14 @@ def process_args(arguments):
     parser.add_argument('--preset', '-p', type=str, default= 'nnPULoss',
                         choices=['nnPULoss','BCELoss', 'FocalLoss'],
                         help="Preset of configuration\n"
-                             "nnPU: With nnPU criterion\n"
+                             "nnPULoss: With nnPU criterion\n"
                              "BCELoss: With BinaryCrossEntropy\n"
                              "FocalLoss: With BinaryCrossEntropy\n")
     parser.add_argument('--num_worker', '-nw', default=8, type=int,
                         help='Number of worker in Dataloader')
+
+    parser.add_argument('--prior', '-pr', default=None, type=float,
+                        help='Prior for nnPULoss')                   
     # parser.add_argument('--labeled', '-l', default=100, type=int,
     #                     help='# of labeled data')
     # parser.add_argument('--unlabeled', '-u', default=59900, type=int,
@@ -59,19 +62,23 @@ def process_args(arguments):
                         help='Stepsize of gradient method')
     parser.add_argument('--out', '-o', default='/results/',
                         help='Directory to output the result')
-    parser.add_argument('--validation', '-v', default=True, type= str2bool,
+    parser.add_argument('--validation', '-v', default=False, type= str2bool,
                         help='Use of a validation dataset')
 
     args = parser.parse_args(arguments)
+    # Preset 
     if args.name == None:
         args.name = args.preset
     if args.preset == "nnPULoss":
         args.loss = "nnPULoss"
-
     elif args.preset == "BCELoss":
         args.loss = "BCELoss"
     elif args.preset =="FocalLoss":
         args.loss = "FocalLoss"
+
+    # Prior
+    if args.prior is not None:
+        args.prior = torch.tensor(args.prior, dtype= torch.float)
 
     assert (args.batchsize > 0)
     assert (args.epoch > 0)
@@ -100,7 +107,7 @@ def select_loss(loss_name, prior):
     return loss_fn
 
 
-def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation, num_worker):
+def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation, num_worker, prior):
     kwargs = {'num_workers': num_worker, 'pin_memory': True} if torch.cuda.is_available() else {}
 
     transforms = Compose([
@@ -133,7 +140,11 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
     else:
         raise ValueError('Unidentified preset has been chosen ')
 
-    prior = train_dataset.get_prior() #if dataloader_preset == "nnPU" else None
+    if prior is None:
+        print('Positive Prior automatically computed')
+        prior = train_dataset.get_prior() #if dataloader_preset == "nnPU" else None
+
+    
     print('IMG status:', train_dataset[0]['img'].shape, train_dataset[0]['img'].dtype, train_dataset[0]['img'].type())
     print('SEG status:', train_dataset[0]['target'].shape, train_dataset[0]['target'].dtype, train_dataset[0]['target'].type())
 
@@ -141,12 +152,12 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
     return train_dataloader, valid_dataloader, prior
 
 
-def print_info_before_training(args, prior):
+def print_info_before_training(args):
     print("")
     print("Name of the Job/training: {}".format(args.name))
     print("Device: {}".format(args.device))
     print("Preset: {}".format(args.preset))
-    print("prior: {}".format(prior))
+    print("prior: {}".format(args.prior))
     print("loss: {}".format(args.loss))
     print("batchsize: {}".format(args.batchsize))
     print("lr: {}".format(args.stepsize))
@@ -162,12 +173,12 @@ def run_trainer(arguments):
 
     train_data, valid_data = preprocess_brats2020(root_dir=args.rootdir, ratio_train_valid= 0.8, ratio_P_to_U= 0.95)
 
-    train_dataloader, valid_dataloader, prior = select_dataloader(train_data,valid_data, args.preset, args.batchsize, args.validation, args.num_worker)
-
+    dataloader_data = select_dataloader(train_data,valid_data, args.preset, args.batchsize, args.validation, args.num_worker, args.prior)
+    train_dataloader, valid_dataloader, args.prior = dataloader_data
 
     model       = unet().to(args.device)
     optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
-    criterion   = select_loss(args.loss, prior)
+    criterion   = select_loss(args.loss, args.prior)
     
     kwargs =  {
         'criterion': criterion,
@@ -176,17 +187,23 @@ def run_trainer(arguments):
         'valid_Dataloader': valid_dataloader,
         'epochs': args.epoch
         }
-    print_info_before_training(args, prior)
+    print_info_before_training(args)
     trainer = Trainer(args.name, model, args.device, **kwargs)
 
     trainer.run_trainer()
 
-    df = pd.DataFrame({
-        'train_loss': trainer.train_loss,
-        'train_dice': trainer.train_dice_coef,
-        'valid_loss': trainer.valid_loss,
-        'valid_dice': trainer.valid_dice_coef
-    })
+    if args.validation is not None:
+        df = pd.DataFrame({
+            'train_loss': trainer.train_loss,
+            'train_dice': trainer.train_dice_coef,
+            'valid_loss': trainer.valid_loss,
+            'valid_dice': trainer.valid_dice_coef
+        })
+    else :
+        df = pd.DataFrame({
+            'train_loss': trainer.train_loss,
+            'train_dice': trainer.train_dice_coef,
+        })
     save_name = trainer.name + '.csv'
     df.to_csv(save_name)
 
