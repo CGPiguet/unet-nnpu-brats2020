@@ -81,7 +81,6 @@ class Trainer:
             self.lr_scheduler.batch()  # learning rate scheduler step
 
       """Save Model""" 
-
       folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_'+ self.name
       file_name   = 'epoch_'
       if not os.path.exists(folder_name):
@@ -89,11 +88,11 @@ class Trainer:
 
       torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)))
       
-      if os.path.exists(os.path.join(folder_name, file_name+ str(self.epoch-3))):
-        if not os.path.join(folder_name, file_name+ str(1)):
-          os.remove(os.path.join(folder_name, file_name+ str(self.epoch-3)))
+      if os.path.exists(os.path.join(folder_name, file_name+ str(self.epoch-1))):
+        if not os.path.join(folder_name, file_name+ str(1)) != os.path.join(folder_name, file_name + str(self.epoch-1)) :
+          os.remove(os.path.join(folder_name, file_name+ str(self.epoch-1)))
 
-
+      print('# Negative Risk is inferior to beta: {}'.format(self.criterion.number_of_negative_loss))
 
     # progressbar.close()
 
@@ -120,11 +119,11 @@ class Trainer:
       
       output  = self.model(input) # One forward pass 
 
-      loss          = self.criterion(output.squeeze(), target.squeeze()) # Calculate loss
+      loss, x_grad          = self.criterion(output.squeeze(), target.squeeze()) # Calculate loss
       loss_value    = loss.item()
 
       train_losses.append(loss_value)
-      loss.backward() # one backward pass
+      x_grad.backward() # one backward pass
       self.optimizer.step() # update the parameters
 
       # Dice Coefficient
@@ -160,7 +159,7 @@ class Trainer:
       with torch.no_grad():
         output      = self.model(input)
 
-        loss        = self.criterion(output.squeeze(), target.squeeze())
+        loss,x_grad = self.criterion(output.squeeze(), target.squeeze())
         loss_value  = loss.item()
         valid_losses.append(loss_value)
         
@@ -212,10 +211,13 @@ class Trainer:
 
   def _dice_coef(self, output, target, smooth= 1):
     assert(output.shape == target.shape)
+    if target.min() == -1:
+      dice_output = torch.sign(output)
+      dice_output = torch.where(dice_output>0, 1, 0)
+    elif target.min() == 0:
+      dice_output = torch.where(output>0.5, 1, 0)
 
-    dice_output = torch.where(output>0, 1, 0)
-    dice_target = torch.where(target>0, 1, 0)
-
+    dice_target = target 
 
     intersection =  torch.sum(dice_target*dice_output, dim=(1,2))
     # print(intersection.shape)
