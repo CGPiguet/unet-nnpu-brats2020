@@ -3,19 +3,21 @@ import torch.nn as nn
 
 
 class PULoss(nn.Module):
-  def __init__(self, prior, loss=(lambda x: torch.sigmoid(-x)), beta= 0, nnPU= True):
+  def __init__(self, prior, loss=(lambda x: torch.sigmoid(-x)), beta= 0,gamma= 1, nnPU= True):
     super(PULoss,self).__init__()
     if not 0 < prior < 1:
       raise NotImplementedError("The class prior should be in (0,1)")
     self.prior = prior
     self.beta  = beta
+    self.gamma = gamma
     self.loss  = loss
     self.nnPU  = nnPU
     self.positive = 1
     self.negative = -1
     self.min_count = torch.tensor(1.)
+    self.number_of_negative_loss = 0
 
-  def forward(self, input, target, test= False):
+  def forward(self, input, target):
     input, target = input.view(-1), target.view(-1)
     assert(input.shape == target.shape)
     positive, unlabeled = target == self.positive, target == self.negative
@@ -40,11 +42,13 @@ class PULoss(nn.Module):
 
     # Update Gradient 
     if negative_risk < -self.beta and self.nnPU:
-
       # Can't understand why they put minus self.beta
-      output = self.prior * positive_risk - self.beta 
+      output = self.prior * positive_risk - self.beta
+      x_grad =  - self.gamma * negative_risk  
+      self.number_of_negative_loss += 1
     else:
       # Rpu = pi_p * Rp + max{0, Rn} = pi_p * Rp + Rn
       output = self.prior * positive_risk + negative_risk
+      x_grad = self.prior * positive_risk + negative_risk
 
-    return output
+    return output, x_grad 
