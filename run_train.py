@@ -50,12 +50,12 @@ def process_args(arguments):
                         help='# of epochs to learn')
     parser.add_argument('--beta', '-B', default=0., type=float,
                         help='Beta parameter of nnPU')
-    # parser.add_argument('--gamma', '-G', default=1., type=float,
-    #                     help='Gamma parameter of nnPU')
+    parser.add_argument('--gamma', '-G', default=1., type=float,
+                        help='Gamma parameter of nnPU')
     parser.add_argument('--loss', type=str, default="nnPULoss", choices=['nnPULoss', 'BCELoss','FocalLoss'],
                         help='The name of a loss function')
-    parser.add_argument('--nnPUloss', type=str, default="sigmoid", choices=['logistic', 'sigmoid'],
-                        help='The name of a loss function used in nnPU')
+    # parser.add_argument('--nnPUloss', type=str, default="sigmoid", choices=['logistic', 'sigmoid'],
+    #                     help='The name of a loss function used in nnPU')
     # parser.add_argument('--model', '-m', default='3lp', choices=['linear', '3lp', 'mlp'],
     #                     help='The name of a classification model')
     parser.add_argument('--stepsize', '-s', default=1e-4, type=float,
@@ -97,9 +97,9 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def select_loss(loss_name, prior):
+def select_loss(loss_name, prior, beta, gamma):
     if loss_name == "nnPULoss":
-        loss_fn = PULoss(prior)
+        loss_fn = PULoss(prior, beta= beta, gamma= gamma)
     elif loss_name == "BCELoss":
         loss_fn = nn.BCEWithLogitsLoss()
     elif loss_name == "FocalLoss":
@@ -178,7 +178,7 @@ def run_trainer(arguments):
 
     model       = unet().to(args.device)
     optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
-    criterion   = select_loss(args.loss, args.prior)
+    criterion   = select_loss(args.loss, args.prior, args.beta, args.gamma)
     
     kwargs =  {
         'criterion': criterion,
