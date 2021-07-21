@@ -215,10 +215,11 @@ class Trainer:
     if target.min() == -1:
       dice_output = torch.sign(output)
       dice_output = torch.where(dice_output>0, 1, 0)
+      dice_target = torch.where(target>0, 1, 0)
     elif target.min() == 0:
       dice_output = torch.where(output>0.5, 1, 0)
+      dice_target = target
 
-    dice_target = target 
 
     intersection =  torch.sum(dice_target*dice_output, dim=(1,2))
     # print(intersection.shape)
