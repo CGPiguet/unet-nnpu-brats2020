@@ -88,11 +88,12 @@ class Trainer:
 
       torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)))
       
-      if os.path.exists(os.path.join(folder_name, file_name+ str(self.epoch-1))):
-        if not os.path.join(folder_name, file_name+ str(1)) != os.path.join(folder_name, file_name + str(self.epoch-1)) :
-          os.remove(os.path.join(folder_name, file_name+ str(self.epoch-1)))
-
-      print('# Negative Risk is inferior to beta: {}'.format(self.criterion.number_of_negative_loss))
+      try:
+        os.remove(os.path.join(folder_name, file_name+ str(self.epoch-1)))
+      except:
+        pass
+    to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.counter/ self.criterion.number_of_negative_loss*100
+    print('# Negative Risk is inferior to beta: {}/{} ({}%)'.format(*to_print))
 
     # progressbar.close()
 

@@ -16,6 +16,7 @@ class PULoss(nn.Module):
     self.negative = -1
     self.min_count = torch.tensor(1.)
     self.number_of_negative_loss = 0
+    self.counter = 0
 
   def forward(self, input, target):
     input, target = input.view(-1), target.view(-1)
@@ -50,5 +51,6 @@ class PULoss(nn.Module):
       # Rpu = pi_p * Rp + max{0, Rn} = pi_p * Rp + Rn
       output = self.prior * positive_risk + negative_risk
       x_grad = self.prior * positive_risk + negative_risk
+    self.counter += 1
 
     return output, x_grad 
