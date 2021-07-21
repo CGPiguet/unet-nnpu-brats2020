@@ -1,5 +1,6 @@
 import sys
 import argparse
+import os
 
 
 
@@ -192,6 +193,7 @@ def run_trainer(arguments):
 
     trainer.run_trainer()
 
+    
     if args.validation is not None:
         df = pd.DataFrame({
             'train_loss': trainer.train_loss,
@@ -204,7 +206,10 @@ def run_trainer(arguments):
             'train_loss': trainer.train_loss,
             'train_dice': trainer.train_dice_coef,
         })
-    save_name = trainer.name + '.csv'
+    folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/resultsCSV/'
+    file_name   = trainer.name + '.csv'
+    save_name   = os.path.join(folder_name, file_name)
+
     df.to_csv(save_name)
 
 
