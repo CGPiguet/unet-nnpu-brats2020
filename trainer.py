@@ -92,7 +92,7 @@ class Trainer:
         os.remove(os.path.join(folder_name, file_name+ str(self.epoch-1)))
       except:
         pass
-    to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.counter/ self.criterion.number_of_negative_loss*100
+    to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.number_of_negative_loss/ self.criterion.counter*100
     print('# Negative Risk is inferior to beta: {}/{} ({}%)'.format(*to_print))
 
     # progressbar.close()
