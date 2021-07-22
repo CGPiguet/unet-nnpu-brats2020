@@ -12,6 +12,8 @@ from torchvision.transforms import ToPILImage, Resize, ToTensor, Normalize, Comp
 
 import pandas as pd
 
+from contextlib import redirect_stdout
+
 # Personal function
 from preprocess import preprocess_brats2020
 from dataset import PN_BraTS2020_Dataset, PU_BraTS2020_Dataset, BCE_BraTS2020_Dataset
@@ -162,7 +164,8 @@ def print_info_before_training(args):
     print("loss: {}".format(args.loss))
     print("batchsize: {}".format(args.batchsize))
     print("lr: {}".format(args.stepsize))
-    print("beta: {}".format(args.beta))
+    print("beta from nnPULoss: {}".format(args.beta))
+    print("gamma from nnPULoss: {}".format(args.gamma))
     print("validation dataset: {}".format(args.validation))
     print("Num of Workers: {}".format(args.num_worker))
     print("")
@@ -188,13 +191,24 @@ def run_trainer(arguments):
         'valid_Dataloader': valid_dataloader,
         'epochs': args.epoch
         }
-    print_info_before_training(args)
-    trainer = Trainer(args.name, model, args.device, **kwargs)
 
+
+    # print info into the output then into a param
+    print_info_before_training(args)
+    folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_'+args.name
+    file_name   = 'parameter.txt'
+    with open(os.path.join(folder_name,file_name), 'w') as f:
+        with redirect_stdout(f):
+            print_info_before_training(args)
+
+
+
+    trainer = Trainer(args.name, model, args.device, **kwargs)
     trainer.run_trainer()
 
     
     if args.validation is not None:
+        print(len(trainer.train_loss), len(trainer.train_dice_coef), len(trainer.valid_loss),len(trainer.valid_dice_coef))
         df = pd.DataFrame({
             'train_loss': trainer.train_loss,
             'train_dice': trainer.train_dice_coef,
@@ -202,6 +216,7 @@ def run_trainer(arguments):
             'valid_dice': trainer.valid_dice_coef
         })
     else :
+        print(len(trainer.train_loss), len(trainer.train_dice_coef))
         df = pd.DataFrame({
             'train_loss': trainer.train_loss,
             'train_dice': trainer.train_dice_coef,
