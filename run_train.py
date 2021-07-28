@@ -15,7 +15,9 @@ import pandas as pd
 from contextlib import redirect_stdout
 
 # Personal function
-from preprocess import preprocess_brats2020
+from preprocess3D import preprocess_brats2020_3D
+from preprocess2D import preprocess_brats2020_2D
+
 from dataset import PN_BraTS2020_Dataset, PU_BraTS2020_Dataset, BCE_BraTS2020_Dataset
 from model import unet
 from nnPULoss import PULoss
@@ -44,29 +46,33 @@ def process_args(arguments):
                         help='Number of worker in Dataloader')
 
     parser.add_argument('--prior', '-pr', default=None, type=float,
-                        help='Prior for nnPULoss')                   
-    # parser.add_argument('--labeled', '-l', default=100, type=int,
-    #                     help='# of labeled data')
-    # parser.add_argument('--unlabeled', '-u', default=59900, type=int,
-    #                      help='# of unlabeled data')
+                        help='Prior for nnPULoss')
+                                           
+    parser.add_argument('--ratio_train_valid', '-rtv', default=0.8, type=float,
+                        help='Ratio between validation and training dataset')
+    parser.add_argument('--ratio_Positive_set_to_Unlabeled', '-rpu', default=0.95, type=float,
+                         help='Ratio of Positive class that will be set as Negative')
+
     parser.add_argument('--epoch', '-e', default=100, type=int,
                         help='# of epochs to learn')
     parser.add_argument('--beta', '-B', default=0., type=float,
                         help='Beta parameter of nnPU')
     parser.add_argument('--gamma', '-G', default=1., type=float,
                         help='Gamma parameter of nnPU')
-    parser.add_argument('--loss', type=str, default="nnPULoss", choices=['nnPULoss', 'BCELoss','FocalLoss'],
-                        help='The name of a loss function')
+    # parser.add_argument('--loss', type=str, default="nnPULoss", choices=['nnPULoss', 'BCELoss','FocalLoss'],
+    #                     help='The name of a loss function')
     # parser.add_argument('--nnPUloss', type=str, default="sigmoid", choices=['logistic', 'sigmoid'],
     #                     help='The name of a loss function used in nnPU')
     # parser.add_argument('--model', '-m', default='3lp', choices=['linear', '3lp', 'mlp'],
     #                     help='The name of a classification model')
     parser.add_argument('--stepsize', '-s', default=1e-4, type=float,
                         help='Stepsize of gradient method')
-    parser.add_argument('--out', '-o', default='/results/',
+    parser.add_argument('--out', '-o', default='/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_',
                         help='Directory to output the result')
     parser.add_argument('--validation', '-v', default=False, type= str2bool,
                         help='Use of a validation dataset')
+    parser.add_argument('--Brats2020_2d', '-2dBrats', default =False, type= str2bool,
+                        help='Determine if the converted 2D Brats2020 must be used')
 
     args = parser.parse_args(arguments)
     # Preset 
@@ -79,6 +85,10 @@ def process_args(arguments):
     elif args.preset =="FocalLoss":
         args.loss = "FocalLoss"
 
+    # if args.Brats2020_2d == True:
+    #     temp_name = '2D_BraTS2020 RatioTrainValid ' + str(args.ratio_train_valid) +' RatioPosToNeg ' + str(args.ratio_Positive_set_to_Unlabeled)
+    #     args.rootdir = temp_name
+    
     # Prior
     if args.prior is not None:
         args.prior = torch.tensor(args.prior, dtype= torch.float)
@@ -86,7 +96,7 @@ def process_args(arguments):
     assert (args.batchsize > 0)
     assert (args.epoch > 0)
     assert (0. <= args.beta)
-    # assert (0. <= args.gamma <= 1.)
+    assert (0. <= args.gamma <= 1.)
     return args
 
 def str2bool(v):
@@ -108,6 +118,14 @@ def select_loss(loss_name, prior, beta, gamma):
     elif loss_name == "FocalLoss":
         loss_fn = BinaryFocalLossWithLogits(reduction='mean')
     return loss_fn
+
+def select_preprocess(Brats2020_2d, root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled):
+    if Brats2020_2d:
+        train_data, valid_data = preprocess_brats2020_3D(root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
+
+    else:
+        train_data, valid_data = preprocess_brats2020_3D(root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
+
 
 
 def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_validation, num_worker, prior):
@@ -155,19 +173,48 @@ def select_dataloader(train_data, valid_data, dataloader_preset, batchsize, is_v
     return train_dataloader, valid_dataloader, prior
 
 
+def save_results(trainer, is_validation, args_out, args_name):
+    if is_validation:
+        print(len(trainer.train_loss), len(trainer.train_dice_coef), len(trainer.valid_loss),len(trainer.valid_dice_coef))
+        df = pd.DataFrame({
+            'train_loss': trainer.train_loss,
+            'train_dice': trainer.train_dice_coef,
+            'train_ROC_AUC': trainer.train_ROC,
+            'valid_loss': trainer.valid_loss,
+            'valid_dice': trainer.valid_dice_coef,
+            'valid_ROC_AUC': trainer.valid_ROC
+        })
+    else :
+        print(len(trainer.train_loss), len(trainer.train_dice_coef))
+        df = pd.DataFrame({
+            'train_loss': trainer.train_loss,
+            'train_dice': trainer.train_dice_coef,
+            'train_ROC_AUC': trainer.train_ROC
+        })
+
+    folder_name = args_out + args_name
+    file_name   = 'results.csv'
+    save_name   = os.path.join(folder_name, file_name)
+
+    df.to_csv(save_name)
+
+
 def print_info_before_training(args):
     print("")
     print("Name of the Job/training: {}".format(args.name))
-    print("Device: {}".format(args.device))
-    print("Preset: {}".format(args.preset))
-    print("prior: {}".format(args.prior))
-    print("loss: {}".format(args.loss))
-    print("batchsize: {}".format(args.batchsize))
-    print("lr: {}".format(args.stepsize))
-    print("beta from nnPULoss: {}".format(args.beta))
-    print("gamma from nnPULoss: {}".format(args.gamma))
-    print("validation dataset: {}".format(args.validation))
-    print("Num of Workers: {}".format(args.num_worker))
+    print("Device:\t {}".format(args.device))
+    print("Preset:\t {}".format(args.preset))
+    print("prior:\t {}".format(args.prior))
+    print("loss:\t {}".format(args.loss))
+    print("Epoch:\t {}".format(args.epoch))
+    print("batchsize:\t {}".format(args.batchsize))
+    print("lr:\t {}".format(args.stepsize))
+    print("beta from nnPULoss:\t {}".format(args.beta))
+    print("gamma from nnPULoss:\t {}".format(args.gamma))
+    print("validation dataset:\t {}".format(args.validation))
+    print("Num of Workers:\t {}".format(args.num_worker))
+    print("Ratio to seperate data into train and validation dataset:\t {}".format(args.ratio_train_valid))
+    print("Ratio of Positive voxel set as Neative:\t {}".format(args.ratio_Positive_set_to_Unlabeled))
     print("")
 
 
@@ -175,58 +222,50 @@ def run_trainer(arguments):
     print("\nTrainer setup\n")
     args = process_args(arguments)
 
-    train_data, valid_data = preprocess_brats2020(root_dir=args.rootdir, ratio_train_valid= 0.8, ratio_P_to_U= 0.95)
+    train_data, valid_data = select_preprocess(args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
 
     dataloader_data = select_dataloader(train_data,valid_data, args.preset, args.batchsize, args.validation, args.num_worker, args.prior)
     train_dataloader, valid_dataloader, args.prior = dataloader_data
 
     model       = unet().to(args.device)
+    print("model.is_cuda: {}".format(next(model.parameters()).is_cuda))
     optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
     criterion   = select_loss(args.loss, args.prior, args.beta, args.gamma)
     
     kwargs =  {
+        'name': args.name,
+        'model': model, 
         'criterion': criterion,
         'optimizer': optimizer,
         'train_Dataloader': train_dataloader,
         'valid_Dataloader': valid_dataloader,
-        'epochs': args.epoch
+        'epochs': args.epoch,
+        'device': args.device,
+        'out': args.out,
         }
 
-
-    # print info into the output then into a param
-    print_info_before_training(args)
-    folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_'+args.name
+    """Create a folder to save model and parameters"""
+    folder_name = args.out + args.name
     file_name   = 'parameter.txt'
+    try:
+        os.mkdir(folder_name)
+    except:
+        pass
+
+    """Print info and save info"""
+    print_info_before_training(args)
+
     with open(os.path.join(folder_name,file_name), 'w') as f:
         with redirect_stdout(f):
             print_info_before_training(args)
 
 
 
-    trainer = Trainer(args.name, model, args.device, **kwargs)
+    trainer = Trainer(**kwargs)
     trainer.run_trainer()
 
-    
-    if args.validation is not None:
-        print(len(trainer.train_loss), len(trainer.train_dice_coef), len(trainer.valid_loss),len(trainer.valid_dice_coef))
-        df = pd.DataFrame({
-            'train_loss': trainer.train_loss,
-            'train_dice': trainer.train_dice_coef,
-            'valid_loss': trainer.valid_loss,
-            'valid_dice': trainer.valid_dice_coef
-        })
-    else :
-        print(len(trainer.train_loss), len(trainer.train_dice_coef))
-        df = pd.DataFrame({
-            'train_loss': trainer.train_loss,
-            'train_dice': trainer.train_dice_coef,
-        })
-    folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/resultsCSV/'
-    file_name   = trainer.name + '.csv'
-    save_name   = os.path.join(folder_name, file_name)
-
-    df.to_csv(save_name)
-
+    """Save results"""
+    save_results(trainer, args.validation, args.out, args.name)
 
 if __name__ == '__main__':
     run_trainer(sys.argv[1:])

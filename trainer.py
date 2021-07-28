@@ -1,20 +1,23 @@
 # Heavily inspired by the Trainer class of the link below
 # https://towardsdatascience.com/creating-and-training-a-u-net-model-with-pytorch-for-2d-3d-semantic-segmentation-training-3-4-8242d31de234
+from threading import RLock
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import torch 
 import numpy as np 
 import os 
 
+from sklearn import metrics
+
 class Trainer:
   def __init__(self,
                name             : str,
                model            : torch.nn.Module,
                device           : torch.device,
-               criterion        : torch.nn.Module,
-               
+               criterion        : torch.nn.Module,              
                optimizer        : torch.optim.Optimizer,
                train_Dataloader : torch.utils.data.Dataset,
+               out              : os.path, 
                valid_Dataloader : torch.utils.data.Dataset = None, 
                lr_scheduler     : torch.optim.lr_scheduler = None,
                epochs           : int = 40, # 100
@@ -30,6 +33,8 @@ class Trainer:
     self.valid_Dataloader = valid_Dataloader
     self.epochs           = epochs
     self.epoch            = epoch
+
+    self.out              = out
     self.notebook         = notebook 
 
     self.train_loss       = []
@@ -37,6 +42,9 @@ class Trainer:
 
     self.train_dice_coef  = []
     self.valid_dice_coef  = []
+
+    self.train_ROC        = []
+    self.valid_ROC        = []
 
     self.learning_rate    = []
 
@@ -81,19 +89,24 @@ class Trainer:
             self.lr_scheduler.batch()  # learning rate scheduler step
 
       """Save Model""" 
-      folder_name = '/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_'+ self.name
+      folder_name = self.out+ self.name
       file_name   = 'epoch_'
-      if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
 
-      torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)))
+      try:
+        os.makedirs(folder_name)
+      except:
+        pass
+
+      torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)))      
       
       try:
         os.remove(os.path.join(folder_name, file_name+ str(self.epoch-1)))
       except:
         pass
-    to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.number_of_negative_loss/ self.criterion.counter*100
-    print('# Negative Risk is inferior to beta: {}/{} ({}%)'.format(*to_print))
+
+    """Percentage of how many time the Negative Risk of nnPU """
+    # to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.number_of_negative_loss/ self.criterion.counter*100
+    # print('# Negative Risk is inferior to beta: {}/{} ({}%)'.format(*to_print))
 
     # progressbar.close()
 
@@ -107,7 +120,12 @@ class Trainer:
     
     self.model.train() # train mode
     train_losses    = []  # accumulate the losses here
-    dice_coefficient = []
+    dice_coefficient= []
+    ROC             = []
+
+    saved_output    = []
+    saved_target    = []
+
 
     # batch_iter = tqdm(enumerate(self.train_Dataloader), 'Training', total=len(self.train_Dataloader),
     #                   leave= True, position= 0 )
@@ -127,14 +145,24 @@ class Trainer:
       x_grad.backward() # one backward pass
       self.optimizer.step() # update the parameters
 
-      # Dice Coefficient
+      """Save prediction and target"""
+      # saved_output.append(output)
+      # saved_target.append(target)
+
+      """Dice Coefficient"""
       dice_coefficient.append(self._dice_coef(output.squeeze(), target.squeeze()))
+      
+      """ROC"""
+      ROC.append(self._ROC_AUC(output.flatten(), target.flatten()))
+
 
       # batch_iter.set_description(f'Training: (loss {loss_value:.4f})')  # update progressbar
       # batch_iter.update()
 
     self.train_loss.append(np.mean(np.array(train_losses)))
     self.train_dice_coef.append(np.mean(dice_coefficient))
+    self.train_ROC.append(np.mean(ROC))
+    # _save_prediction_target( output , target, False)
     self.learning_rate.append(self.optimizer.param_groups[0]['lr'])
 
     # batch_iter.close()
@@ -148,6 +176,7 @@ class Trainer:
     self.model.eval() # evaluation mode
     valid_losses = [] # accumulate the losses here
     dice_coefficient = []
+    ROC = []
 
     # batch_iter = tqdm(enumerate(self.valid_Dataloader), 'Validation', total=len(self.valid_Dataloader),
     #                   leave= True, position= 0)
@@ -160,18 +189,24 @@ class Trainer:
       with torch.no_grad():
         output      = self.model(input)
 
-        loss,x_grad = self.criterion(output.squeeze(), target.squeeze())
+        loss, x_grad = self.criterion(output.squeeze(), target.squeeze())
         loss_value  = loss.item()
         valid_losses.append(loss_value)
         
-        # Dice Coefficient
+        """Dice Coefficient"""
         dice_coefficient.append(self._dice_coef(output.squeeze(), target.squeeze()))
+
+        """ROC"""
+        ROC.append(self._ROC_AUC(output.flatten(), target.flatten()))
+
+
 
         # batch_iter.set_description(f'Validation: (loss {loss_value:.4f})')
         # batch_iter.update()
       
     self.valid_loss.append(np.mean(np.array(valid_losses)))
     self.valid_dice_coef.append(np.mean(dice_coefficient))
+    self.valid_ROC.append(np.mean(ROC))
 
     # batch_iter.close()
 
@@ -229,5 +264,46 @@ class Trainer:
     # shape of union = [64]
     dice         =  torch.mean((2.*intersection + smooth)/(union + smooth), dim=0)
     return dice.item()
+
+  def _ROC_AUC(self, output, target):
+    roc_target = target.cpu().numpy()
+    roc_output = torch.tanh(output)
+    roc_output = roc_output.detach().cpu().numpy()
+
+
+    fpr, tpr, thresholds = metrics.roc_curve(roc_target, roc_output)
+    ROC = metrics.auc(fpr, tpr)
+    
+    return ROC
+
+  # def _save_prediction_target(self, output , target, valid):
+    save_output = output.detach().cpu()
+    save_target = target.cpu()
+
+    folder_name = self.out+ self.name
+    if not valid:
+      prediction_folder = os.path.join(folder_name, 'train_Prediction')
+      target_folder     = os.path.join(folder_name, 'train_GroundTruth')
+    else:
+      prediction_folder = os.path.join(folder_name, 'valid_Prediction')
+      target_folder     = os.path.join(folder_name, 'valid_GroundTruth')
+
+    prediction_name   = 'pred' + self.epoch + '.pt'
+    target_name       = 'target'+ self.epoch + '.pt'
+
+    try:
+      os.makedirs(prediction_folder)
+    except:
+      pass
+    try:
+      os.makedirs(target_folder)
+    except:
+      pass
+    torch.save(save_output, os.path.join(prediction_folder, prediction_name))
+
+
+
+
+    
 
 
