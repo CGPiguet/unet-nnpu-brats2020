@@ -14,7 +14,7 @@ def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', rat
     os.mkdir(new_rootdir)
     convert_BraTS2020_to_2D(new_rootdir, train_data, True, ratio_train_valid, ratio_P_to_U)    
     convert_BraTS2020_to_2D(new_rootdir, valid_data, False, ratio_train_valid, ratio_P_to_U) 
-    
+
     return train_data, valid_data
 
 
@@ -43,27 +43,27 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         slice_id    = img_info['slice']
         mode        = img_info['mode']
 
-        target          = target[subject_id]
-        seg_path        = target['seg_path']
-        p_coordinate    = target['P_coordinate']
-        unhealthy_slice = target['unhealthy_slice']
+        target_temp     = target[subject_id]
+        seg_path        = target_temp['seg_path']
+        p_coordinate    = target_temp['P_coordinate']
+        unhealthy_slice = target_temp['unhealthy_slice']
 
         # Make directory per subject
-        subject_folder = os.path.join(main_folder, subject_id)
+        subject_folder = os.path.join(main_folder, str(subject_id))
         try:
             os.mkdir(subject_folder)
         except:
             pass
         
         # Make directory per img mode
-        img_mode_folder = os.path.join(subject_folder, mode)
+        img_mode_folder = os.path.join(subject_folder, str(mode))
         try:
             os.mkdir(img_mode_folder)
         except:
             pass
 
         # Make dirctory per slice
-        img_slice_folder = os.path.join(img_mode_folder, slice_id)
+        img_slice_folder = os.path.join(img_mode_folder, str(slice_id))
         try:
             os.mkdir(img_slice_folder)
         except:
@@ -77,9 +77,11 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         ## Only slice that contains unhealhty
         img_slice   = img[slice_id,:,:]
         ## Save IMG
-        img = Image.fromarray(img_slice)
-        save_path = os.path.join(img_slice_folder,'img.jpg')
-        img.save(save_path)
+        img = Image.fromarray(img_slice).convert("L")
+        save_path_img = os.path.join(img_slice_folder,'img.jpg')
+        save_path_arr = os.path.join(img_slice_folder,'img.npy')
+        img.save(save_path_img)
+        np.save(save_path_arr, img_slice)
 
         # SEG
         ## Load segmentation image
@@ -87,9 +89,11 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         ## Get Positive pixel coordinate
         seg_slice   = seg[slice_id,:,:]
         ## Save SEG 
-        seg = Image.fromarray(seg_slice)
-        save_path = os.path.join(img_slice_folder,'seg.jpg')
+        seg = Image.fromarray(seg_slice).convert("L")
+        save_path_img = os.path.join(img_slice_folder,'seg.jpg')
+        save_path_arr = os.path.join(img_slice_folder,'seg.npy')
         seg.save(save_path)
+        np.save(save_path_arr, img_slice)
         # cv2.imwrite(os.path.join(img_slice_folder,'seg.jpg'), seg_slice)
 
         # Save Positive Coordinate
