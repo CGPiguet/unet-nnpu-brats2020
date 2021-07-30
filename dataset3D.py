@@ -12,7 +12,7 @@ import matplotlib.animation as animation
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToPILImage, Resize, ToTensor, Normalize, Compose
 
-class BraTS2020_Dataset(Dataset):
+class BraTS2020_Dataset_3D(Dataset):
     def get_lengths(self) -> None:
         print('len(data): ', len(self.inputs))
         print('len(targets): ', len(self.targets))
@@ -75,7 +75,7 @@ class BraTS2020_Dataset(Dataset):
         plt.imshow(img_slice)
 
 
-class PU_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
+class PU_BraTS2020_Dataset_3D(BraTS2020_Dataset_3D, Dataset):
     def __init__(self, data_list, transforms= None) -> None:
         super().__init__()
         self.inputs      = data_list[0]
@@ -86,7 +86,7 @@ class PU_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
     def __len__(self) -> int:
         return len(self.inputs)
 
-    def __getitem__(self, index: int) -> tuple:
+    def __getitem__(self, index: int) -> dict:
         input       = self.inputs[index]
         subject_id  = input['id']
         img_path    = input['img_path']
@@ -161,7 +161,7 @@ class PU_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
 
         return prior
 
-class PN_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
+class PN_BraTS2020_Dataset_3D(BraTS2020_Dataset_3D, Dataset):
     def __init__(self, data_list, transforms= None) -> None:
         super().__init__()
         self.inputs      = data_list[0]
@@ -172,7 +172,7 @@ class PN_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
     def __len__(self) -> int:
         return len(self.inputs)
 
-    def __getitem__(self, index: int) -> tuple:
+    def __getitem__(self, index: int) -> dict:
         input       = self.inputs[index]
         subject_id  = input['id']
         img_path    = input['img_path']
@@ -210,7 +210,7 @@ class PN_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
         })
         return data
 
-class BCE_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
+class BCE_BraTS2020_Dataset_3D(BraTS2020_Dataset_3D, Dataset):
     def __init__(self, data_list, transforms= None) -> None:
         super().__init__()
         self.inputs      = data_list[0]
@@ -221,7 +221,7 @@ class BCE_BraTS2020_Dataset(BraTS2020_Dataset, Dataset):
     def __len__(self) -> int:
         return len(self.inputs)
 
-    def __getitem__(self, index: int) -> tuple:
+    def __getitem__(self, index: int) -> dict:
         input       = self.inputs[index]
         subject_id  = input['id']
         img_path    = input['img_path']
