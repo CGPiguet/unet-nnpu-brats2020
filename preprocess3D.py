@@ -79,12 +79,12 @@ def get_img_path_from_folder(path_list: list):
         for file_name in os.listdir(folder_path):
             if 't1.nii.gz' in file_name:
                 file_dict.update({'T1': os.path.join(folder_path,file_name)})
-            # if 't1ce.nii.gz' in file_name:
-            #   file_dict.update({'T1ce': os.path.join(folder_path,file_name)})
-            # if 't2.nii.gz' in file_name:
-            #   file_dict.update({'T2': os.path.join(folder_path,file_name)})
-            # if 'flair.nii.gz' in file_name:
-            #   file_dict.update({'T2flair': os.path.join(folder_path,file_name)})
+            if 't1ce.nii.gz' in file_name:
+              file_dict.update({'T1ce': os.path.join(folder_path,file_name)})
+            if 't2.nii.gz' in file_name:
+              file_dict.update({'T2': os.path.join(folder_path,file_name)})
+            if 'flair.nii.gz' in file_name:
+              file_dict.update({'T2flair': os.path.join(folder_path,file_name)})
             if 'seg.nii.gz' in file_name:
                 file_dict.update({'Seg': os.path.join(folder_path,file_name)})
 

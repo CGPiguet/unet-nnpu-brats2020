@@ -1,22 +1,78 @@
+from operator import mod
+import sys
+import argparse
 import os
+from types import new_class
+
 import numpy as np
 import SimpleITK as sitk
+
+import pandas as pd
 
 from PIL import Image
 from contextlib import redirect_stdout
 
 from preprocess3D import preprocess_brats2020_3D
 
+def process_args(arguments):
+    parser = argparse.ArgumentParser(
+        description='Standalone function to convert BraTS2020 to 2D',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--rootdir', '-r', type=str, default="MICCAI_BraTS2020_TrainingData",
+                        help='Root directory of the BraTS2020')
+    parser.add_argument('--ratio_train_valid', '-rtv', default=0.8, type=float,
+                        help='Ratio between validation and training dataset')
+    parser.add_argument('--ratio_Positive_set_to_Unlabeled', '-rpu', default=0.95, type=float,
+                         help='Ratio of Positive class that will be set as Negative') 
+    args = parser.parse_args(arguments)
+    return args
+                    
 
 def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95):
-    train_data, valid_data = preprocess_brats2020_3D(root_dir, ratio_train_valid, ratio_P_to_U)
+    
     new_rootdir = '2D_BraTS2020 RatioTrainValid ' + str(ratio_train_valid) +' RatioPosToNeg ' + str(ratio_P_to_U)
-    os.mkdir(new_rootdir)
-    convert_BraTS2020_to_2D(new_rootdir, train_data, True, ratio_train_valid, ratio_P_to_U)    
-    convert_BraTS2020_to_2D(new_rootdir, valid_data, False, ratio_train_valid, ratio_P_to_U) 
+    if os.path.exists(new_rootdir):
+        print("2D BraTS2020 already present with:\n\tRatioTrainValid: {}\tRatioPosToNeg: {}".format(ratio_train_valid, ratio_P_to_U))
+    else:
+        train_data, valid_data = preprocess_brats2020_3D(root_dir, ratio_train_valid, ratio_P_to_U)
+        os.mkdir(new_rootdir)
+        convert_BraTS2020_to_2D(new_rootdir, train_data, True, ratio_train_valid, ratio_P_to_U)    
+        convert_BraTS2020_to_2D(new_rootdir, valid_data, False, ratio_train_valid, ratio_P_to_U) 
+    for train_valid_dir in os.listdir(new_rootdir):
+        if train_valid_dir == 'BraTS2020_Train':
+            train_data = retrieve_img_path_2D(os.path.join(new_rootdir, train_valid_dir))
+        elif train_valid_dir == 'BraTS2020_Valid':
+            valid_data = retrieve_img_path_2D(os.path.join(new_rootdir, train_valid_dir))
+        else:
+            raise NotImplementedError("Not implemented name folder. Should expect BraTS2020_Train or BraTS2020_Valid but got: {}".format(train_valid_dir))
 
     return train_data, valid_data
 
+def retrieve_img_path_2D(rootdir):
+    data = []
+    for subjectdir in os.listdir(rootdir):
+        subjectdir_path = os.path.join(rootdir,subjectdir)
+        if not os.path.isdir(subjectdir_path):
+            continue
+        for modedir in os.listdir(subjectdir_path):
+            modedir_path = os.path.join(subjectdir_path ,modedir)
+            if not os.path.isdir(modedir_path):
+                continue
+            #//TODO Toggle comment to use mode of choice 
+            # elif modedir == 'T1':
+            #     continue
+            elif modedir == 'T1ce':
+                continue
+            elif modedir == 'T2':
+                continue
+            elif modedir == 'T2flair':
+                continue
+            for slicedir in os.listdir(modedir_path):
+                slicedir_path = os.path.join(modedir_path, slicedir)
+                if not os.path.isdir(slicedir_path):
+                    continue
+                data.append(slicedir_path)       
+    return data
 
 def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio_train_valid: float, ratio_P_to_U: float):
 
@@ -77,10 +133,12 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         ## Only slice that contains unhealhty
         img_slice   = img[slice_id,:,:]
         ## Save IMG
-        img = Image.fromarray(img_slice).convert("L")
         save_path_img = os.path.join(img_slice_folder,'img.jpg')
         save_path_arr = os.path.join(img_slice_folder,'img.npy')
-        img.save(save_path_img)
+        ### PIL Image
+        # img = Image.fromarray(img_slice).convert("L")
+        # img.save(save_path_img)
+        ### Numpy array
         np.save(save_path_arr, img_slice)
 
         # SEG
@@ -89,12 +147,14 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         ## Get Positive pixel coordinate
         seg_slice   = seg[slice_id,:,:]
         ## Save SEG 
-        seg = Image.fromarray(seg_slice).convert("L")
         save_path_img = os.path.join(img_slice_folder,'seg.jpg')
         save_path_arr = os.path.join(img_slice_folder,'seg.npy')
-        seg.save(save_path)
+        ### PIL Image
+        # seg = Image.fromarray(seg_slice).convert("L")
+        # seg.save(save_path_img)
+        ### Numpy array       
         np.save(save_path_arr, img_slice)
-        # cv2.imwrite(os.path.join(img_slice_folder,'seg.jpg'), seg_slice)
+
 
         # Save Positive Coordinate
         ## Get Positive pixel coordinate
@@ -106,3 +166,21 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
                 positive_coordinate.append((y,x))
         save_path = os.path.join(img_slice_folder,'positive_coordinate.npy')
         np.save(save_path, positive_coordinate)
+
+        # Save Subject Info 
+        save_path = os.path.join(img_slice_folder,'SubjectInfos.csv')
+        df = pd.DataFrame({
+            'subject': subject_id,
+            'slice': slice_id,
+            'mode': mode,
+            'unhealthy_slice': unhealthy_slice
+        })
+        df.to_csv(save_path)
+
+
+def main(arguments):
+    args = process_args(arguments)
+    preprocess_brats2020_2D(args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
