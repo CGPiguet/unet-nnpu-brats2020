@@ -104,6 +104,11 @@ class Trainer:
       except:
         pass
 
+      if self.epoch % 50 == 0:
+        torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)+ '_checkpoint'))  
+
+         
+
     """Percentage of how many time the Negative Risk of nnPU """
     # to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.number_of_negative_loss/ self.criterion.counter*100
     # print('# Negative Risk is inferior to beta: {}/{} ({}%)'.format(*to_print))
