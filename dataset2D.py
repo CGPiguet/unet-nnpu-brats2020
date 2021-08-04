@@ -81,9 +81,9 @@ class PN_BraTS2020_Dataset_2D(Dataset):
         target              = np.load(ground_truth_path)
         subjectInfo         = pd.read_csv(subjectInfo_path)
 
-        subject_id          = subjectInfo['subject'].unique()
+        subject_id          = subjectInfo['subject'].unique().item()
         slice_id            = subjectInfo['slice'].unique()
-        mode                = subjectInfo['mode'].unique()
+        mode                = subjectInfo['mode'].unique().item()
         unhealthy_slice     = subjectInfo['unhealthy_slice'].unique()
 
         if self.transforms:
@@ -127,9 +127,9 @@ class BCE_BraTS2020_Dataset_2D(Dataset):
         target              = np.load(ground_truth_path)
         subjectInfo         = pd.read_csv(subjectInfo_path)
 
-        subject_id          = subjectInfo['subject'].unique()
+        subject_id          = subjectInfo['subject'].unique().item()
         slice_id            = subjectInfo['slice'].unique()
-        mode                = subjectInfo['mode'].unique()
+        mode                = subjectInfo['mode'].unique().item()
         unhealthy_slice     = subjectInfo['unhealthy_slice'].unique()
 
         if self.transforms:
