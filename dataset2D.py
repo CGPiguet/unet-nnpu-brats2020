@@ -44,7 +44,7 @@ class PU_BraTS2020_Dataset_2D(Dataset):
         else:
             image = torch.Tensor(image)
 
-        target_bin = np.zeros((target.shape))
+        target_bin = -1*np.ones((target.shape))
         target_bin[positive_coor[0], positive_coor[1]] = 1
         target_bin = torch.tensor(target_bin, dtype= torch.float32)
 
