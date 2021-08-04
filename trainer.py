@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import torch 
 import numpy as np 
 import os 
+import pandas as pd
 
 from sklearn import metrics
 
@@ -22,6 +23,7 @@ class Trainer:
                lr_scheduler     : torch.optim.lr_scheduler = None,
                epochs           : int = 40, # 100
                epoch            : int = 0,
+               original_epoch   : int = 0,
                notebook         : bool = False):
   
     self.model            = model
@@ -33,6 +35,7 @@ class Trainer:
     self.valid_Dataloader = valid_Dataloader
     self.epochs           = epochs
     self.epoch            = epoch
+    self.original_epoch   = original_epoch
 
     self.out              = out
     self.notebook         = notebook 
@@ -52,6 +55,16 @@ class Trainer:
 
     self.test1            = []
     self.test2            = []
+    
+    folder_name = self.out + self.name
+    file_name   = 'results.csv'
+    save_name   = os.path.join(folder_name, file_name)
+    
+    if not os.path.isfile(save_name):
+      df=pd.DataFrame(columns=["Name","Old","New"])
+      df.to_csv(save_name)
+      
+    
 
 
 
@@ -77,9 +90,9 @@ class Trainer:
       """Print Status"""
       to_print = 'Epoch: {}/{}\ttrain_loss: {}\ttrain_dice_coef: {}\tvalid_loss: {}\tvalid_dice_coef: {}'
       if self.valid_Dataloader is not None:
-        print(to_print.format(self.epoch, self.epochs, self.train_loss[-1], self.train_dice_coef[-1], self.valid_loss[-1], self.valid_dice_coef[-1]))
+        print(to_print.format(self.epoch + self.original_epoch, self.epochs + self.original_epoch, self.train_loss[-1], self.train_dice_coef[-1], self.valid_loss[-1], self.valid_dice_coef[-1]))
       else:
-        print(to_print.format(self.epoch, self.epochs, self.train_loss[-1], self.train_dice_coef[-1], None, None))
+        print(to_print.format(self.epoch + self.original_epoch, self.epochs + self.original_epoch, self.train_loss[-1], self.train_dice_coef[-1], None, None))
 
       """Learning rate scheduler block"""
       if self.lr_scheduler is not None:
@@ -97,15 +110,15 @@ class Trainer:
       except:
         pass
 
-      torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)))      
+      torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch)))      
       
       try:
-        os.remove(os.path.join(folder_name, file_name+ str(self.epoch-1)))
+        os.remove(os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch - 1)))
       except:
         pass
 
       if self.epoch % 50 == 0:
-        torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch)+ '_checkpoint'))  
+        torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch)+ '_checkpoint'))  
 
          
 
@@ -281,30 +294,60 @@ class Trainer:
     
     return ROC
 
-  # def _save_prediction_target(self, output , target, valid):
-    save_output = output.detach().cpu()
-    save_target = target.cpu()
+  def _save_results(self):
+      if self.valid_Dataloader is not None:
+          # print(len(self.train_loss), len(self.train_dice_coef), len(self.valid_loss),len(self.valid_dice_coef))
+          df = pd.DataFrame({
+              'train_loss': self.train_loss[-1],
+              'train_dice': self.train_dice_coef[-1],
+              'train_ROC_AUC': self.train_ROC[-1],
+              'valid_loss': self.valid_loss[-1],
+              'valid_dice': self.valid_dice_coef[-1],
+              'valid_ROC_AUC': self.valid_ROC[-1]
+          })
+      else :
+          # print(len(self.train_loss), len(self.train_dice_coef))
+          df = pd.DataFrame({
+              'train_loss': self.train_loss[-1],
+              'train_dice': self.train_dice_coef[-1],
+              'train_ROC_AUC': self.train_ROC[-1]
+          })
 
-    folder_name = self.out+ self.name
-    if not valid:
-      prediction_folder = os.path.join(folder_name, 'train_Prediction')
-      target_folder     = os.path.join(folder_name, 'train_GroundTruth')
-    else:
-      prediction_folder = os.path.join(folder_name, 'valid_Prediction')
-      target_folder     = os.path.join(folder_name, 'valid_GroundTruth')
+      folder_name = self.out + self.name
+      file_name   = 'results.csv'
+      save_name   = os.path.join(folder_name, file_name)
+      
+      with open(save_name, 'a') as f:
+        if not os.path.isfile(save_name):   
+          df.to_csv(f, header=True)
+        else:
+          df.to_csv(f, header=False)
+      
 
-    prediction_name   = 'pred' + self.epoch + '.pt'
-    target_name       = 'target'+ self.epoch + '.pt'
+  # # def _save_prediction_target(self, output , target, valid):
+  #   save_output = output.detach().cpu()
+  #   save_target = target.cpu()
 
-    try:
-      os.makedirs(prediction_folder)
-    except:
-      pass
-    try:
-      os.makedirs(target_folder)
-    except:
-      pass
-    torch.save(save_output, os.path.join(prediction_folder, prediction_name))
+  #   folder_name = self.out+ self.name
+  #   if not valid:
+  #     prediction_folder = os.path.join(folder_name, 'train_Prediction')
+  #     target_folder     = os.path.join(folder_name, 'train_GroundTruth')
+  #   else:
+  #     prediction_folder = os.path.join(folder_name, 'valid_Prediction')
+  #     target_folder     = os.path.join(folder_name, 'valid_GroundTruth')
+
+  #   prediction_name   = 'pred' + self.epoch + '.pt'
+  #   target_name       = 'target'+ self.epoch + '.pt'
+
+  #   try:
+  #     os.makedirs(prediction_folder)
+  #   except:
+  #     pass
+  #   try:
+  #     os.makedirs(target_folder)
+  #   except:
+  #     pass
+  #   torch.save(save_output, os.path.join(prediction_folder, prediction_name))
 
 
 

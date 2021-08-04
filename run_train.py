@@ -33,7 +33,7 @@ def process_args(arguments):
                         help='Root directory of the BraTS2020')
     parser.add_argument('--name', '-n', type=str, default=None,
                         help='Name of the job/training.')
-    parser.add_argument('--batchsize', '-b', type=int, default=64,
+    parser.add_argument('--batchsize', '-b', type=int, default=16,
                         help='Mini batch size')
     parser.add_argument('--device', '-d', type=torch.device, default= torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
                         help='Determine the torch device, AutoDetection per default')
@@ -56,6 +56,7 @@ def process_args(arguments):
 
     parser.add_argument('--epoch', '-e', default=100, type=int,
                         help='# of epochs to learn')
+    
     parser.add_argument('--beta', '-B', default=0., type=float,
                         help='Beta parameter of nnPU')
     parser.add_argument('--gamma', '-G', default=1., type=float,
@@ -75,6 +76,11 @@ def process_args(arguments):
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default =False, type= str2bool,
                         help='Determine if the converted 2D Brats2020 must be used')
 
+    parser.add_argument('--load_model', '-load_model', default =None, type= str,
+                        help='Link to the saved model')
+    parser.add_argument('--original_epoch', '-oe', default=100, type=int,
+                        help='If a model is loaded, define the current epoch')
+    
     args = parser.parse_args(arguments)
     # Preset 
     if args.name == None:
@@ -90,6 +96,19 @@ def process_args(arguments):
     # Prior
     if args.prior is not None:
         args.prior = torch.tensor(args.prior, dtype= torch.float)
+        
+    # Load previous model 
+    if args.load_model is not None:
+        # Retrive the folder name of the loaded model to save in it       
+        total_path =  os.path.split(args.out)[1]
+        path_to_model_folder =  os.path.split(args.load_model)[0]
+        name = path_to_model_folder.replace(total_path, "")
+        args.name = name
+        # Retrieve the epoch of the previous training
+        original_epoch = ''.join(x for x in os.path.split(args.load_model)[1] if x.isdigit())
+        args.original_epoch = int(original_epoch)
+        
+        
 
     assert (args.batchsize > 0)
     assert (args.epoch > 0)
@@ -193,30 +212,30 @@ def select_dataloader(Brats2020_is_2d, train_data, valid_data, dataloader_preset
     return train_dataloader, valid_dataloader, prior
 
 
-def save_results(trainer, is_validation, args_out, args_name):
-    if is_validation:
-        print(len(trainer.train_loss), len(trainer.train_dice_coef), len(trainer.valid_loss),len(trainer.valid_dice_coef))
-        df = pd.DataFrame({
-            'train_loss': trainer.train_loss,
-            'train_dice': trainer.train_dice_coef,
-            'train_ROC_AUC': trainer.train_ROC,
-            'valid_loss': trainer.valid_loss,
-            'valid_dice': trainer.valid_dice_coef,
-            'valid_ROC_AUC': trainer.valid_ROC
-        })
-    else :
-        print(len(trainer.train_loss), len(trainer.train_dice_coef))
-        df = pd.DataFrame({
-            'train_loss': trainer.train_loss,
-            'train_dice': trainer.train_dice_coef,
-            'train_ROC_AUC': trainer.train_ROC
-        })
+# def save_results(trainer, is_validation, args_out, args_name):
+#     if is_validation:
+#         print(len(trainer.train_loss), len(trainer.train_dice_coef), len(trainer.valid_loss),len(trainer.valid_dice_coef))
+#         df = pd.DataFrame({
+#             'train_loss': trainer.train_loss,
+#             'train_dice': trainer.train_dice_coef,
+#             'train_ROC_AUC': trainer.train_ROC,
+#             'valid_loss': trainer.valid_loss,
+#             'valid_dice': trainer.valid_dice_coef,
+#             'valid_ROC_AUC': trainer.valid_ROC
+#         })
+#     else :
+#         print(len(trainer.train_loss), len(trainer.train_dice_coef))
+#         df = pd.DataFrame({
+#             'train_loss': trainer.train_loss,
+#             'train_dice': trainer.train_dice_coef,
+#             'train_ROC_AUC': trainer.train_ROC
+#         })
 
-    folder_name = args_out + args_name
-    file_name   = 'results.csv'
-    save_name   = os.path.join(folder_name, file_name)
+#     folder_name = args_out + args_name
+#     file_name   = 'results.csv'
+#     save_name   = os.path.join(folder_name, file_name)
 
-    df.to_csv(save_name)
+#     df.to_csv(save_name)
 
 
 def print_info_before_training(args):
@@ -236,6 +255,8 @@ def print_info_before_training(args):
     print("Use a converted 2D BraTS2020 dataset: {}".format(args.Brats2020_is_2d))
     print("Ratio to seperate data into train and validation dataset:\t {}".format(args.ratio_train_valid))
     print("Ratio of Positive voxel set as Neative:\t {}".format(args.ratio_Positive_set_to_Unlabeled))
+    print("Model load: {}".format(args.load_model))
+    print("# of epoch of the loaded model: {}".format(args.original_epoch))
     print("")
 
 
@@ -249,6 +270,9 @@ def run_trainer(arguments):
     train_dataloader, valid_dataloader, args.prior = dataloader_data
 
     model       = unet().to(args.device)
+    if args.load_model:
+        model.load_state_dict(torch.load(args.load_model))
+        
     print("model.is_cuda: {}".format(next(model.parameters()).is_cuda))
     optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
     criterion   = select_loss(args.loss, args.prior, args.beta, args.gamma)
@@ -260,6 +284,7 @@ def run_trainer(arguments):
         'optimizer': optimizer,
         'train_Dataloader': train_dataloader,
         'valid_Dataloader': valid_dataloader,
+        'original_epoch': args.original_epoch,
         'epochs': args.epoch,
         'device': args.device,
         'out': args.out,
@@ -268,6 +293,7 @@ def run_trainer(arguments):
     """Create a folder to save model and parameters"""
     folder_name = args.out + args.name
     file_name   = 'parameter.txt'
+    
     try:
         os.mkdir(folder_name)
     except:
@@ -286,7 +312,7 @@ def run_trainer(arguments):
     trainer.run_trainer()
 
     """Save results"""
-    save_results(trainer, args.validation, args.out, args.name)
+    # save_results(trainer, args.validation, args.out, args.name)
 
 if __name__ == '__main__':
     run_trainer(sys.argv[1:])
