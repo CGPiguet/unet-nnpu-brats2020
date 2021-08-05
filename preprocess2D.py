@@ -153,7 +153,7 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         # seg = Image.fromarray(seg_slice).convert("L")
         # seg.save(save_path_img)
         ### Numpy array       
-        np.save(save_path_arr, img_slice)
+        np.save(save_path_arr, seg_slice)
 
 
         # Save Positive Coordinate

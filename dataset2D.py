@@ -91,7 +91,7 @@ class PN_BraTS2020_Dataset_2D(Dataset):
         else:
             image = torch.Tensor(image)
 
-        target_bin = np.where(target>0, -1, 1)
+        target_bin = np.where(target>0, 1, -1)
         target_bin = torch.tensor(target_bin, dtype= torch.float32)
 
 

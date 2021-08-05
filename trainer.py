@@ -54,16 +54,7 @@ class Trainer:
     self.name             = name 
 
     self.test1            = []
-    self.test2            = []
-    
-    folder_name = self.out + self.name
-    file_name   = 'results.csv'
-    save_name   = os.path.join(folder_name, file_name)
-    
-    if not os.path.isfile(save_name):
-      df=pd.DataFrame(columns=["Name","Old","New"])
-      df.to_csv(save_name)
-      
+    self.test2            = []  
     
 
 
@@ -96,10 +87,13 @@ class Trainer:
 
       """Learning rate scheduler block"""
       if self.lr_scheduler is not None:
-        if self.valid_DataLoader is not None and self.lr_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
+        if self.valid_Dataloader is not None and self.lr_scheduler.__class__.__name__ == 'ReduceLROnPlateau':
             self.lr_scheduler.batch(self.validation_loss[i])  # learning rate scheduler step with validation loss
         else:
             self.lr_scheduler.batch()  # learning rate scheduler step
+      
+      """Save Results"""
+      self._save_results()
 
       """Save Model""" 
       folder_name = self.out+ self.name
@@ -298,19 +292,19 @@ class Trainer:
       if self.valid_Dataloader is not None:
           # print(len(self.train_loss), len(self.train_dice_coef), len(self.valid_loss),len(self.valid_dice_coef))
           df = pd.DataFrame({
-              'train_loss': self.train_loss[-1],
-              'train_dice': self.train_dice_coef[-1],
-              'train_ROC_AUC': self.train_ROC[-1],
-              'valid_loss': self.valid_loss[-1],
-              'valid_dice': self.valid_dice_coef[-1],
-              'valid_ROC_AUC': self.valid_ROC[-1]
+              'train_loss': [self.train_loss[-1]],
+              'train_dice': [self.train_dice_coef[-1]],
+              'train_ROC_AUC': [self.train_ROC[-1]],
+              'valid_loss': [self.valid_loss[-1]],
+              'valid_dice': [self.valid_dice_coef[-1]],
+              'valid_ROC_AUC': [self.valid_ROC[-1]]
           })
       else :
           # print(len(self.train_loss), len(self.train_dice_coef))
           df = pd.DataFrame({
-              'train_loss': self.train_loss[-1],
-              'train_dice': self.train_dice_coef[-1],
-              'train_ROC_AUC': self.train_ROC[-1]
+              'train_loss': [self.train_loss[-1]],
+              'train_dice': [self.train_dice_coef[-1]],
+              'train_ROC_AUC': [self.train_ROC[-1]]
           })
 
       folder_name = self.out + self.name
@@ -318,10 +312,7 @@ class Trainer:
       save_name   = os.path.join(folder_name, file_name)
       
       with open(save_name, 'a') as f:
-        if not os.path.isfile(save_name):   
-          df.to_csv(f, header=True)
-        else:
-          df.to_csv(f, header=False)
+          df.to_csv(f, header=f.tell()==0)
       
 
   # # def _save_prediction_target(self, output , target, valid):
