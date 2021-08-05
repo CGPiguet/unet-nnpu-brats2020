@@ -78,7 +78,7 @@ def process_args(arguments):
 
     parser.add_argument('--load_model', '-load_model', default =None, type= str,
                         help='Link to the saved model')
-    parser.add_argument('--original_epoch', '-oe', default=100, type=int,
+    parser.add_argument('--original_epoch', '-oe', default=0, type=int,
                         help='If a model is loaded, define the current epoch')
     
     args = parser.parse_args(arguments)
