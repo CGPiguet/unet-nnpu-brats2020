@@ -115,9 +115,11 @@ def run_trainer(arguments):
     train_dataloader, valid_dataloader, args.prior = dataloader_data
 
     """Setup of the model and optimizer parameters"""
-    model       = unet().to(args.device)
-    optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
-    criterion   = select_loss(args.loss, args.prior, args.beta, args.gamma)
+    model           = unet().to(args.device)
+    optimizer       = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
+    criterion       = select_loss(args.loss, args.prior, args.beta, args.gamma)
+    original_epoch  = 0
+    
     if args.load_checkpoint:
         model.load_state_dict(torch.load(args.load_checkpoint['model_state_dict']))
         optimizer.load_state_dict(torch.load(args.load_checkpoint['optimizer_state_dict']))
