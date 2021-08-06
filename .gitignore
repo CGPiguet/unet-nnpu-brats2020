@@ -1,16 +1,28 @@
 
 *.gz
 *.csv
+*.txt
+*.sh
+*.out
+
+
 .vscode
 __pycache__
 .ipynb_checkpoints
-MICCAI_BraTS2020_TrainingData.zip
-dummy_test.ipynb
-*.txt
-model_saved_*
-*.sh
-download_BraTS2020.py
-default-1a6b898a-5836-4870-903e-499c89c5c638.ipynb
-*.out
-2D_BraTS2020*
+
+# Different test in Jupyter Lab
+dummy_*.ipynb
 visualize.ipynb
+
+# Dataset.zip
+MICCAI_BraTS2020_TrainingData.zip
+2D_BraTS2020*
+
+
+model_saved_*
+# Contains the url to download the datasets, not to share
+download_BraTS2020.py
+
+
+
+
