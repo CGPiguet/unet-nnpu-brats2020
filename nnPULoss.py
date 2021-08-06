@@ -32,7 +32,7 @@ Non-Negative Risk Estimator
     self.counter = 0
 
   def forward(self, input, target)->tuple(torch.tensor, torch.tensor):
- ""   """[summary]
+    """Forward pass of the loss function with non-negative risk estimator
 
     Args:
         input (torch.tensor): Prediction of the model for the data
