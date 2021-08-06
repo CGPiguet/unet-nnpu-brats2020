@@ -114,6 +114,7 @@ def run_trainer(arguments):
     dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data,valid_data, args.preset, args.batchsize, args.validation, args.num_worker, args.prior)
     train_dataloader, valid_dataloader, args.prior = dataloader_data
 
+    """Setup of the model and optimizer parameters"""
     model       = unet().to(args.device)
     optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
     criterion   = select_loss(args.loss, args.prior, args.beta, args.gamma)
