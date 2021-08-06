@@ -1,6 +1,8 @@
 import torch 
 import torch.nn as nn 
 
+from typing import Tuple
+
 
 class PULoss(nn.Module):
   def __init__(self, prior, loss=(lambda x: torch.sigmoid(-x)), beta= 0,gamma= 1, nnPU= True)-> None:
@@ -31,7 +33,7 @@ Non-Negative Risk Estimator
     self.number_of_negative_loss = 0
     self.counter = 0
 
-  def forward(self, input, target)->tuple(torch.tensor, torch.tensor):
+  def forward(self, input, target) -> Tuple[torch.tensor, torch.tensor]:
     """Forward pass of the loss function with non-negative risk estimator
 
     Args:
