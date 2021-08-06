@@ -133,7 +133,7 @@ def run_trainer(arguments):
         'optimizer': optimizer,
         'train_Dataloader': train_dataloader,
         'valid_Dataloader': valid_dataloader,
-        'original_epoch': args.original_epoch,
+        'original_epoch': original_epoch,
         'epochs': args.epoch,
         'device': args.device,
         'out': args.out,
