@@ -144,6 +144,7 @@ def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio
         # SEG
         ## Load segmentation image
         seg = sitk.GetArrayFromImage(sitk.ReadImage(seg_path))
+        seg = seg.astype(np.uint8)
         ## Get Positive pixel coordinate
         seg_slice   = seg[slice_id,:,:]
         ## Save SEG 
