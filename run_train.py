@@ -63,6 +63,7 @@ def process_args(arguments):
                         help='Continue training by pointing to the correct saved model')
     
     args = parser.parse_args(arguments)
+    
     # Preset 
     if args.name == None:
         args.name = args.preset
@@ -86,7 +87,7 @@ def process_args(arguments):
         name = path_to_model_folder.replace(total_path, "")
         args.name = name
         
-        
+    args.original_epoch = 0   
 
     assert (args.batchsize > 0)
     assert (args.epoch > 0)
@@ -123,7 +124,7 @@ def run_trainer(arguments):
     if args.load_checkpoint:
         model.load_state_dict(torch.load(args.load_checkpoint['model_state_dict']))
         optimizer.load_state_dict(torch.load(args.load_checkpoint['optimizer_state_dict']))
-        original_epoch = torch.load(args.load_checkpoint['epoch'])
+        args.original_epoch = torch.load(args.load_checkpoint['epoch'])
         
     print("model.is_cuda: {}".format(next(model.parameters()).is_cuda))
     
@@ -135,7 +136,7 @@ def run_trainer(arguments):
         'optimizer': optimizer,
         'train_Dataloader': train_dataloader,
         'valid_Dataloader': valid_dataloader,
-        'original_epoch': original_epoch,
+        'original_epoch': args.original_epoch,
         'epochs': args.epoch,
         'device': args.device,
         'out': args.out,
