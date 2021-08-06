@@ -13,7 +13,7 @@ from dataset2D import BCE_BraTS2020_Dataset_2D, PN_BraTS2020_Dataset_2D, PU_BraT
 from nnPULoss import PULoss
 from FocalLoss import BinaryFocalLossWithLogits
 
-def select_loss(loss_name: str, prior: float, beta: float, gamma: float)-> torch.nn Module:
+def select_loss(loss_name: str, prior: float, beta: float, gamma: float)-> torch.nn.Module:
     """Simply select the loss between BCELossWithLogitsLoss, FocalLoss (deprecated) and nnPU Loss.
 
     Args:
