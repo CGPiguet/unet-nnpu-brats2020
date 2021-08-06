@@ -85,7 +85,7 @@ def process_args(arguments):
         path_to_model_folder =  os.path.split(args.load_checkpoint)[0]
         name = path_to_model_folder.replace(total_path, "")
         args.name = name
-        # Retrieve the epoch of the previous training
+        
         
 
     assert (args.batchsize > 0)

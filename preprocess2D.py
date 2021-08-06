@@ -25,8 +25,18 @@ def process_args(arguments):
     return args
                     
 
-def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95):
-    
+def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95)-> tuple(list, list):
+    """Verify if a current 2D Brats2020 is currently present in the repertory, if not it converts it automatically
+    with ratio of Positive pixel set as Unlabeled and the ratio to divide the dataset between the train and validation dataset. 
+
+    Args:
+        root_dir (str): Path to the original BraTS2020 dataset. Defaults to 'MICCAI_BraTS2020_TrainingData'.
+        ratio_train_valid (float): Ratio to divide the data between train and validation dataset. Defaults to 0.8.
+        ratio_P_to_U (float): Ratio of Positive pixel set as Unlabaled in respect to PU Learning. Defaults to 0.95.
+
+    Returns:
+        (list, list): Returns the list of path for the training data and validation data.
+    """
     new_rootdir = '2D_BraTS2020 RatioTrainValid ' + str(ratio_train_valid) +' RatioPosToNeg ' + str(ratio_P_to_U)
     if os.path.exists(new_rootdir):
         print("2D BraTS2020 already present with:\n\tRatioTrainValid: {}\tRatioPosToNeg: {}".format(ratio_train_valid, ratio_P_to_U))
@@ -45,7 +55,15 @@ def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', rat
 
     return train_data, valid_data
 
-def retrieve_img_path_2D(rootdir):
+def retrieve_img_path_2D(rootdir)-> list:
+    """Retrieve the path to the 2D data folder
+
+    Args:
+        rootdir (os.path): Path to the folder that contains the train and valid dataset
+
+    Returns:
+        list: list that contains the path to the data
+    """
     data = []
     for subjectdir in os.listdir(rootdir):
         subjectdir_path = os.path.join(rootdir,subjectdir)
@@ -71,7 +89,17 @@ def retrieve_img_path_2D(rootdir):
                 data.append(slicedir_path)       
     return data
 
-def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio_train_valid: float, ratio_P_to_U: float):
+def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio_train_valid: float, ratio_P_to_U: float)->None:
+    """Create a folder to save the converted 2D BraTS2020 dataset.
+
+    Args:
+        root_dir (os.path): Path where the new 2D BraTS dataset will be saved.
+        data_tuple (tuple): Contains the data and ground truth of the original 3D Brats2020 dataset.
+        train (bool): If set to True, it create the folder for train data. If False, it create the folder for validation data.
+        ratio_train_valid (float): Ratio to divide the data between the train and validation dataset.
+        ratio_P_to_U (float): Ratio of Positive pixel set to Unlabeled in respect to PU learning.
+    """
+    
 
     data, target = data_tuple
 

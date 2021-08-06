@@ -13,7 +13,18 @@ from dataset2D import BCE_BraTS2020_Dataset_2D, PN_BraTS2020_Dataset_2D, PU_BraT
 from nnPULoss import PULoss
 from FocalLoss import BinaryFocalLossWithLogits
 
-def select_loss(loss_name, prior, beta, gamma):
+def select_loss(loss_name: str, prior: float, beta: float, gamma: float)-> torch.nn Module:
+    """Simply select the loss between BCELossWithLogitsLoss, FocalLoss (deprecated) and nnPU Loss.
+
+    Args:
+        loss_name (str): The name of the loss to use
+        prior (float): The Positive prior, if not given, it is compute from the dataset to
+        beta (float): Beta parameter of nnPU
+        gamma (float): Gamma parameter of NnPU
+
+    Returns:
+        torch.nn Module: Loss function 
+    """    
     if loss_name == "nnPULoss":
         loss_fn = PULoss(prior, beta= beta, gamma= gamma)
     elif loss_name == "BCELoss":
@@ -22,7 +33,18 @@ def select_loss(loss_name, prior, beta, gamma):
         loss_fn = BinaryFocalLossWithLogits(reduction='mean')
     return loss_fn
 
-def select_preprocess(Brats2020_is_2d, root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled):
+def select_preprocess(Brats2020_is_2d: bool , root_dir: os.path, ratio_train_valid: float, ratio_Positive_set_to_Unlabeled: float)-> Tuple[list, list]:
+    """Select the preprocess, between the 3D BraTS2020 dataset or the 2D converted BraTS2020.
+
+    Args:
+        Brats2020_is_2d (bool): If set to True, use the converted 2D BraTS2020 dataset. If set to False, use the original 3D BraTS2020 dataset.
+        root_dir (os.path): Directory of the BraTS2020 dataset
+        ratio_train_valid (float): Ratio to divide the BraTS2020 dataset between train and validation dataset.
+        ratio_Positive_set_to_Unlabeled (float): Ratio of Positive pixel set as Unlabeled in respect to PU learning.
+
+    Returns:
+        Tuple[list, list]: Returns two list for training and validation data
+    """    
     if Brats2020_is_2d:
         train_data, valid_data = preprocess_brats2020_2D(root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
 
@@ -32,7 +54,27 @@ def select_preprocess(Brats2020_is_2d, root_dir, ratio_train_valid, ratio_Positi
 
 
 
-def select_dataloader(Brats2020_is_2d, train_data, valid_data, dataloader_preset, batchsize, is_validation, num_worker, prior):
+def select_dataloader(Brats2020_is_2d: bool,
+                      train_data: list,
+                      valid_data: list,
+                      dataloader_preset: str,
+                      batchsize: int, is_validation: bool,
+                      num_worker: int, prior: float)-> Tuple[torch.utils.data.Dataset, torch.utils.data.Dataset, float]:
+    """Select the correct dataloader in respect to the given parameters.
+
+    Args:
+        Brats2020_is_2d (bool): If set as True, use the 2D converted BraTS2020 dataset. If set as False, use the the 3D original BraTS2020 dataset.
+        train_data (list): List of the training data path.
+        valid_data (list): List of the validation data path.
+        dataloader_preset (str): Define which dataloader to use in respect to the Loss function used.
+        batchsize (int): Size of the batch  
+        is_validation (bool): If set to True, use a validation dataset. If set to False, only a training dataset will be used.
+        num_worker (int): Set the num_worker parameter of the Dataloader.
+        prior (float): Positive-class prior parameter from nnPU.
+
+    Returns:
+        Tuple[torch.utils.data.Dataset, torch.utils.data.Dataset, float]: Returns the two Dataloaders and the prior.
+    """
     kwargs = {'num_workers': num_worker, 'pin_memory': True} if torch.cuda.is_available() else {}
 
     transforms = Compose([

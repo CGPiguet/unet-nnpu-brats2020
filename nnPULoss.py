@@ -3,7 +3,20 @@ import torch.nn as nn
 
 
 class PULoss(nn.Module):
-  def __init__(self, prior, loss=(lambda x: torch.sigmoid(-x)), beta= 0,gamma= 1, nnPU= True):
+  def __init__(self, prior, loss=(lambda x: torch.sigmoid(-x)), beta= 0,gamma= 1, nnPU= True)-> None:
+    """Implementation of the non-negative risk estimator from Positive-Unlabeled Learning with
+Non-Negative Risk Estimator 
+
+    Args:
+        prior (float): The positive class prior
+        loss (lambda): Loss function used in the risks estimators. Defaults to (lambda x: torch.sigmoid(-x)).
+        beta (int): Beta parameter from the nnPU paper. Defaults to 0.
+        gamma (int): Gamma parameter from the nnPU paper. Defaults to 1.
+        nnPU (bool): If set to True, apply the non-negative risk estimator. If set to False, apply the unbiased risk estirmator. Defaults to True.
+
+    Raises:
+        NotImplementedError: The prior should always be set between 0 and 1 (0,1)
+    """
     super(PULoss,self).__init__()
     if not 0 < prior < 1:
       raise NotImplementedError("The class prior should be in (0,1)")
@@ -18,7 +31,16 @@ class PULoss(nn.Module):
     self.number_of_negative_loss = 0
     self.counter = 0
 
-  def forward(self, input, target):
+  def forward(self, input, target)->tuple(torch.tensor, torch.tensor):
+ ""   """[summary]
+
+    Args:
+        input (torch.tensor): Prediction of the model for the data
+        target (torch.tensor): Ground-truth of the data
+
+    Returns:
+        (output (torch.tensor), x_grad torch.tensor)): Returns the results of the non-negative risk estimator, and the value used in the backward propagation
+    """
     input, target = input.view(-1), target.view(-1)
     assert(input.shape == target.shape)
     positive, unlabeled = target == self.positive, target == self.negative

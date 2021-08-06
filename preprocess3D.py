@@ -10,7 +10,7 @@ from download_BraTS2020 import download_BraTS2020
 
 
 
-def get_subfolder(root_dir: str):
+def get_subfolder(root_dir: str)->list:
     """Returns a list with sub-directory of root_dir 
 
     Args:
