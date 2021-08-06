@@ -55,7 +55,7 @@ def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', rat
 
     return train_data, valid_data
 
-def retrieve_img_path_2D(rootdir)-> list:
+def retrieve_img_path_2D(rootdir: os.path)-> list:
     """Retrieve the path to the 2D data folder
 
     Args:
