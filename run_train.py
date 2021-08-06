@@ -76,10 +76,8 @@ def process_args(arguments):
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default =False, type= str2bool,
                         help='Determine if the converted 2D Brats2020 must be used')
 
-    parser.add_argument('--load_model', '-load_model', default =None, type= str,
+    parser.add_argument('--load_checkpoint', '-load_checkpoint', default =None, type= str,
                         help='Link to the saved model')
-    parser.add_argument('--original_epoch', '-oe', default=0, type=int,
-                        help='If a model is loaded, define the current epoch')
     
     args = parser.parse_args(arguments)
     # Preset 
@@ -98,16 +96,13 @@ def process_args(arguments):
         args.prior = torch.tensor(args.prior, dtype= torch.float)
         
     # Load previous model 
-    if args.load_model is not None:
+    if args.load_checkpoint is not None:
         # Retrive the folder name of the loaded model to save in it       
         total_path =  os.path.split(args.out)[1]
-        path_to_model_folder =  os.path.split(args.load_model)[0]
+        path_to_model_folder =  os.path.split(args.load_checkpoint)[0]
         name = path_to_model_folder.replace(total_path, "")
         args.name = name
         # Retrieve the epoch of the previous training
-        original_epoch = ''.join(x for x in os.path.split(args.load_model)[1] if x.isdigit())
-        args.original_epoch = int(original_epoch)
-        
         
 
     assert (args.batchsize > 0)
@@ -255,7 +250,7 @@ def print_info_before_training(args):
     print("Use a converted 2D BraTS2020 dataset: {}".format(args.Brats2020_is_2d))
     print("Ratio to seperate data into train and validation dataset:\t {}".format(args.ratio_train_valid))
     print("Ratio of Positive voxel set as Neative:\t {}".format(args.ratio_Positive_set_to_Unlabeled))
-    print("Model load: {}".format(args.load_model))
+    print("Model load: {}".format(args.load_checkpoint))
     print("# of epoch of the loaded model: {}".format(args.original_epoch))
     print("")
 
@@ -270,12 +265,15 @@ def run_trainer(arguments):
     train_dataloader, valid_dataloader, args.prior = dataloader_data
 
     model       = unet().to(args.device)
-    if args.load_model:
-        model.load_state_dict(torch.load(args.load_model))
-        
-    print("model.is_cuda: {}".format(next(model.parameters()).is_cuda))
     optimizer   = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
     criterion   = select_loss(args.loss, args.prior, args.beta, args.gamma)
+    if args.load_checkpoint:
+        model.load_state_dict(torch.load(args.load_checkpoint['model_state_dict']))
+        optimizer.load_state_dict(torch.load(args.load_checkpoint['optimizer_state_dict']))
+        original_epoch = torch.load(args.load_checkpoint['epoch'])
+        
+    print("model.is_cuda: {}".format(next(model.parameters()).is_cuda))
+    
     
     kwargs =  {
         'name': args.name,

@@ -95,7 +95,8 @@ class Trainer:
       """Save Results"""
       self._save_results()
 
-      """Save Model""" 
+      """Save state_dict""" 
+      self._save_state_dicts()
       folder_name = self.out+ self.name
       file_name   = 'epoch_'
 
@@ -103,16 +104,24 @@ class Trainer:
         os.makedirs(folder_name)
       except:
         pass
-
-      torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch)))      
       
+      state_dict = {
+        'epoch': self.epoch,
+        'model_state_dict': self.model.state_dict(),
+        'optimizer_state_dict': self.optimizer.state_dict()
+      }
+      save_state_dict_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch) + '.pth')
+      torch.save(state_dict, save_state_dict_name)      
+      
+      delete_previous_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch - 1) + '.pth')
       try:
-        os.remove(os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch - 1)))
+        os.remove(delete_previous_name)
       except:
         pass
 
       if self.epoch % 50 == 0:
-        torch.save(self.model.state_dict(), os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch)+ '_checkpoint'))  
+        save_state_dict_checkpoint_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch) + '_checkpoint' + '.pth')
+        torch.save(state_dict, save_state_dict_checkpoint_name)  
 
          
 
@@ -222,40 +231,7 @@ class Trainer:
 
     # batch_iter.close()
 
-  def plot_loss(self, to_save= False):
-    plt.figure(figsize=(8, 6), dpi=100)
-    plt.plot(np.arange(self.epochs), self.train_loss)
-    plt.plot(np.arange(self.epochs), self.valid_loss)
-    plt.legend(['train_loss','valid_loss'])
-    plt.xlabel('epoch')
-    plt.ylabel('loss value')
-    plt.title('Train/test loss')
 
-    if to_save:
-      name = '_TrainTest_Loss.png'
-      name = self.name + name 
-      path = 'results'
-      
-      path = os.path.join(path, name)
-      print(path)
-      print()
-      plt.savefig(path)
-
-  def plot_dice_coefficient(self, to_save= False):
-    plt.figure(figsize=(8, 6), dpi=100)
-    plt.plot(np.arange(self.epochs), self.train_dice_coef)
-    plt.plot(np.arange(self.epochs), self.valid_dice_coef)
-    plt.legend(['train_acc','valid_acc'])
-    plt.xlabel('epoch')
-    plt.ylabel('accuracy')
-    plt.title('Train/test Dice Coefficient')
-
-    if to_save:
-      name = '_TrainTest_DiceCoef.png'
-      name = self.name + name 
-      path = '/content/drive/MyDrive/img/UNet/'
-      path = os.path.join(path, name)
-      plt.savefig(path)
 
   def _dice_coef(self, output, target, smooth= 1):
     assert(output.shape == target.shape)
@@ -288,6 +264,34 @@ class Trainer:
     
     return ROC
 
+  def _save_state_dicts(self):
+    folder_name = self.out+ self.name
+    file_name   = 'epoch_'
+
+    try:
+      os.makedirs(folder_name)
+    except:
+      pass
+    
+    state_dict = {
+      'epoch': self.epoch,
+      'model_state_dict': self.model.state_dict(),
+      'optimizer_state_dict': self.optimizer.state_dict()
+    }
+    save_state_dict_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch) + '.pth')
+    torch.save(state_dict, save_state_dict_name)      
+    
+    delete_previous_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch - 1) + '.pth')
+    try:
+      os.remove(delete_previous_name)
+    except:
+      pass
+
+    if self.epoch % 50 == 0:
+      save_state_dict_checkpoint_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch) + '_checkpoint' + '.pth')
+      torch.save(state_dict, save_state_dict_checkpoint_name)  
+
+    
   def _save_results(self):
       if self.valid_Dataloader is not None:
           # print(len(self.train_loss), len(self.train_dice_coef), len(self.valid_loss),len(self.valid_dice_coef))
@@ -341,7 +345,40 @@ class Trainer:
   #   torch.save(save_output, os.path.join(prediction_folder, prediction_name))
 
 
+  # def plot_loss(self, to_save= False):
+  #   plt.figure(figsize=(8, 6), dpi=100)
+  #   plt.plot(np.arange(self.epochs), self.train_loss)
+  #   plt.plot(np.arange(self.epochs), self.valid_loss)
+  #   plt.legend(['train_loss','valid_loss'])
+  #   plt.xlabel('epoch')
+  #   plt.ylabel('loss value')
+  #   plt.title('Train/test loss')
 
+  #   if to_save:
+  #     name = '_TrainTest_Loss.png'
+  #     name = self.name + name 
+  #     path = 'results'
+      
+  #     path = os.path.join(path, name)
+  #     print(path)
+  #     print()
+  #     plt.savefig(path)
+
+  # def plot_dice_coefficient(self, to_save= False):
+  #   plt.figure(figsize=(8, 6), dpi=100)
+  #   plt.plot(np.arange(self.epochs), self.train_dice_coef)
+  #   plt.plot(np.arange(self.epochs), self.valid_dice_coef)
+  #   plt.legend(['train_acc','valid_acc'])
+  #   plt.xlabel('epoch')
+  #   plt.ylabel('accuracy')
+  #   plt.title('Train/test Dice Coefficient')
+
+  #   if to_save:
+  #     name = '_TrainTest_DiceCoef.png'
+  #     name = self.name + name 
+  #     path = '/content/drive/MyDrive/img/UNet/'
+  #     path = os.path.join(path, name)
+  #     plt.savefig(path)
 
     
 
