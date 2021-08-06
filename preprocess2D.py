@@ -1,6 +1,7 @@
 import sys
 import argparse
 import os
+from typing import Tuple
 
 import numpy as np
 import SimpleITK as sitk
@@ -25,7 +26,7 @@ def process_args(arguments):
     return args
                     
 
-def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95)-> tuple(list, list):
+def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95)-> Tuple[list, list]:
     """Verify if a current 2D Brats2020 is currently present in the repertory, if not it converts it automatically
     with ratio of Positive pixel set as Unlabeled and the ratio to divide the dataset between the train and validation dataset. 
 
@@ -45,6 +46,7 @@ def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', rat
         os.mkdir(new_rootdir)
         convert_BraTS2020_to_2D(new_rootdir, train_data, True, ratio_train_valid, ratio_P_to_U)    
         convert_BraTS2020_to_2D(new_rootdir, valid_data, False, ratio_train_valid, ratio_P_to_U) 
+        
     for train_valid_dir in os.listdir(new_rootdir):
         if train_valid_dir == 'BraTS2020_Train':
             train_data = retrieve_img_path_2D(os.path.join(new_rootdir, train_valid_dir))
