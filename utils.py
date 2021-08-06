@@ -33,7 +33,7 @@ def select_loss(loss_name: str, prior: float, beta: float, gamma: float)-> torch
         loss_fn = BinaryFocalLossWithLogits(reduction='mean')
     return loss_fn
 
-def select_preprocess(Brats2020_is_2d: bool , root_dir: os.path, ratio_train_valid: float, ratio_Positive_set_to_Unlabeled: float)-> Tuple[list, list]:
+def select_preprocess(Brats2020_is_2d: bool , root_dir: str, ratio_train_valid: float, ratio_Positive_set_to_Unlabeled: float)-> Tuple[list, list]:
     """Select the preprocess, between the 3D BraTS2020 dataset or the 2D converted BraTS2020.
 
     Args:
