@@ -1,15 +1,12 @@
-from operator import mod
 import sys
 import argparse
 import os
-from types import new_class
 
 import numpy as np
 import SimpleITK as sitk
 
 import pandas as pd
 
-from PIL import Image
 from contextlib import redirect_stdout
 
 from preprocess3D import preprocess_brats2020_3D

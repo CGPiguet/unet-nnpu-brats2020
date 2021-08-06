@@ -1,16 +1,11 @@
 import os
-from numpy.lib.type_check import imag
-from pandas.core.algorithms import mode
 import torch
-import SimpleITK as sitk
-
-from tqdm import tqdm, trange
 
 import numpy as np
 import pandas as pd
 
-from torch.utils.data import DataLoader, Dataset
-from torchvision.transforms import ToPILImage, Resize, ToTensor, Normalize, Compose
+from torch.utils.data import Dataset
+
 
 class PU_BraTS2020_Dataset_2D(Dataset):
     def __init__(self, path_to_data, transforms= None) -> None:
@@ -44,9 +39,14 @@ class PU_BraTS2020_Dataset_2D(Dataset):
         else:
             image = torch.Tensor(image)
 
+        # For training 
         target_bin = -1*np.ones((target.shape))
         target_bin[positive_coor[0], positive_coor[1]] = 1
         target_bin = torch.tensor(target_bin, dtype= torch.float32)
+        
+        # For evaluating
+        target = np.where(target>0, 1, -1)
+        target = torch.tensor(target, dtype= torch.float32)
 
 
         data = dict({
@@ -76,10 +76,13 @@ class PN_BraTS2020_Dataset_2D(Dataset):
         image_path          = os.path.join(data_path, 'img.npy')
         ground_truth_path   = os.path.join(data_path, 'seg.npy')
         subjectInfo_path    = os.path.join(data_path, 'SubjectInfos.csv')
+        positive_coor_path  = os.path.join(data_path, 'positive_coordinate.npy')
+        
 
         image               = np.load(image_path)
         target              = np.load(ground_truth_path)
         subjectInfo         = pd.read_csv(subjectInfo_path)
+        positive_coor       = np.load(positive_coor_path).squeeze()
 
         subject_id          = subjectInfo['subject'].unique().item()
         slice_id            = subjectInfo['slice'].unique()
@@ -91,8 +94,14 @@ class PN_BraTS2020_Dataset_2D(Dataset):
         else:
             image = torch.Tensor(image)
 
-        target_bin = np.where(target>0, 1, -1)
+        # For training 
+        target_bin = -1*np.ones((target.shape))
+        target_bin[positive_coor[0], positive_coor[1]] = 1
         target_bin = torch.tensor(target_bin, dtype= torch.float32)
+        
+        # For evaluating
+        target = np.where(target>0, 1, -1)
+        target = torch.tensor(target, dtype= torch.float32)
 
 
         data = dict({
@@ -137,14 +146,14 @@ class BCE_BraTS2020_Dataset_2D(Dataset):
         else:
             image = torch.Tensor(image)
 
-        target_bin = np.where(target>0, 0, 1)
+        target_bin = np.where(target>0, 1, 0)
         target_bin = torch.tensor(target_bin, dtype= torch.float32)
 
 
         data = dict({
             'img': image,
             'target': target_bin,
-            'original_target':target,
+            'original_target':target_bin,
             'id': subject_id, 
             'mode': mode,
             'slice': slice_id,

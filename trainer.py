@@ -96,34 +96,7 @@ class Trainer:
       self._save_results()
 
       """Save state_dict""" 
-      self._save_state_dicts()
-      folder_name = self.out+ self.name
-      file_name   = 'epoch_'
-
-      try:
-        os.makedirs(folder_name)
-      except:
-        pass
-      
-      state_dict = {
-        'epoch': self.epoch,
-        'model_state_dict': self.model.state_dict(),
-        'optimizer_state_dict': self.optimizer.state_dict()
-      }
-      save_state_dict_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch) + '.pth')
-      torch.save(state_dict, save_state_dict_name)      
-      
-      delete_previous_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch - 1) + '.pth')
-      try:
-        os.remove(delete_previous_name)
-      except:
-        pass
-
-      if self.epoch % 50 == 0:
-        save_state_dict_checkpoint_name = os.path.join(folder_name, file_name+ str(self.epoch + self.original_epoch) + '_checkpoint' + '.pth')
-        torch.save(state_dict, save_state_dict_checkpoint_name)  
-
-         
+      self._save_state_dicts()        
 
     """Percentage of how many time the Negative Risk of nnPU """
     # to_print = self.criterion.number_of_negative_loss, self.criterion.counter, self.criterion.number_of_negative_loss/ self.criterion.counter*100
@@ -171,10 +144,12 @@ class Trainer:
       # saved_target.append(target)
 
       """Dice Coefficient"""
-      dice_coefficient.append(self._dice_coef(output.squeeze(), target.squeeze()))
+      unmodified_target = data['original_target']
+      unmodified_target = unmodified_target.to(self.device)
+      dice_coefficient.append(self._dice_coef(output.squeeze(), unmodified_target.squeeze()))
       
       """ROC"""
-      ROC.append(self._ROC_AUC(output.flatten(), target.flatten()))
+      ROC.append(self._ROC_AUC(output.flatten(), unmodified_target.flatten()))
 
 
       # batch_iter.set_description(f'Training: (loss {loss_value:.4f})')  # update progressbar
@@ -215,10 +190,12 @@ class Trainer:
         valid_losses.append(loss_value)
         
         """Dice Coefficient"""
-        dice_coefficient.append(self._dice_coef(output.squeeze(), target.squeeze()))
+        unmodified_target = data['original_target']
+        unmodified_target = unmodified_target.to(self.device)
+        dice_coefficient.append(self._dice_coef(output.squeeze(), unmodified_target.squeeze()))
 
         """ROC"""
-        ROC.append(self._ROC_AUC(output.flatten(), target.flatten()))
+        ROC.append(self._ROC_AUC(output.flatten(), unmodified_target.flatten()))
 
 
 
