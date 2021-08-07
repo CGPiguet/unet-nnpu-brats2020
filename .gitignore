@@ -11,7 +11,7 @@ __pycache__
 .ipynb_checkpoints
 
 # Different test in Jupyter Lab
-dummy_*.ipynb
+dummy*.ipynb
 visualize.ipynb
 
 # Dataset.zip
