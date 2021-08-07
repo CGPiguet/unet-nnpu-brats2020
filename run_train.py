@@ -52,15 +52,15 @@ def process_args(arguments):
     #                     help='The name of a loss function used in nnPU')
     parser.add_argument('--stepsize', '-s', default=1e-4, type=float,
                         help='Stepsize of gradient method')
-    parser.add_argument('--out', '-o', default='/storage/homefs/cp14h011/unet-nnpu-brats2020/model_saved_',
+    parser.add_argument('--out', '-o', default='model_saved_',
                         help='Directory to output the result')
     parser.add_argument('--validation', '-v', default=False, type= str2bool,
                         help='Use of a validation dataset')
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default = True, type= str2bool,
                         help='Determine if a converted 2D Brats2020 must be used, if set to true, convert automatically')
 
-    parser.add_argument('--load_checkpoint', '-load_checkpoint', default =None, type= str,
-                        help='Continue training by pointing to the correct saved model')
+    parser.add_argument('--continue_training', '-continue_training', default = False, type= str2bool,
+                        help='Continue training')
     
     args = parser.parse_args(arguments)
     
@@ -80,14 +80,25 @@ def process_args(arguments):
         args.prior = torch.tensor(args.prior, dtype= torch.float)
         
     # Load previous model 
-    if args.load_checkpoint is not None:
-        # Retrive the folder name of the loaded model to save in it       
-        total_path =  os.path.split(args.out)[1]
-        path_to_model_folder =  os.path.split(args.load_checkpoint)[0]
-        name = path_to_model_folder.replace(total_path, "")
-        args.name = name
-        
-    args.original_epoch = 0   
+    args.path_to_last_model = None
+    args.original_epoch = 0  
+    if args.continue_training == True:
+        folder_name = args.out + args.name
+        if os.path.isdir(folder_name):
+            saved_model= []
+            saved_model_name = [files for files in os.listdir(folder_name) if '.pth' in files]
+            if not len(saved_model_name):
+                raise NotImplementedError('No previous model found to load')
+            for models in saved_model_name:
+                epoch = int(''.join(char for char in models if char.isdigit()))
+                saved_model.append((epoch, models))
+            saved_model.sort()
+            last_model = saved_model[-1][1]
+            path_to_last_model = os.path.join(folder_name, last_model)
+        else:
+            raise NotImplementedError("No correct folder detected to continue training. Got the name '{}' and didnt' find a folder named '{}'".format(args.name, folder_name))
+        args.path_to_last_model = path_to_last_model 
+       
 
     assert (args.batchsize > 0)
     assert (args.epoch > 0)
@@ -119,12 +130,11 @@ def run_trainer(arguments):
     model           = unet().to(args.device)
     optimizer       = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
     criterion       = select_loss(args.loss, args.prior, args.beta, args.gamma)
-    original_epoch  = 0
     
-    if args.load_checkpoint:
-        model.load_state_dict(torch.load(args.load_checkpoint['model_state_dict']))
-        optimizer.load_state_dict(torch.load(args.load_checkpoint['optimizer_state_dict']))
-        args.original_epoch = torch.load(args.load_checkpoint['epoch'])
+    if args.continue_training:
+        model.load_state_dict(torch.load(args.path_to_last_model)['model_state_dict'])
+        optimizer.load_state_dict(torch.load(args.path_to_last_model)['optimizer_state_dict'])
+        args.original_epoch = torch.load(args.path_to_last_model)['epoch']
         
     print("model.is_cuda: {}".format(next(model.parameters()).is_cuda))
     
