@@ -132,7 +132,7 @@ class Trainer:
       
       output  = self.model(input) # One forward pass 
 
-      loss, x_grad          = self.criterion(output.squeeze(), target.squeeze()) # Calculate loss
+      loss, x_grad  = self.criterion(output.squeeze(), target.squeeze()) # Calculate loss
       loss_value    = loss.item()
 
       train_losses.append(loss_value)
@@ -183,10 +183,10 @@ class Trainer:
       # input, target = input.squeeze(), target.squeeze()
 
       with torch.no_grad():
-        output      = self.model(input)
+        output        = self.model(input)
 
-        loss, x_grad = self.criterion(output.squeeze(), target.squeeze())
-        loss_value  = loss.item()
+        loss, x_grad  = self.criterion(output.squeeze(), target.squeeze())
+        loss_value    = loss.item()
         valid_losses.append(loss_value)
         
         """Dice Coefficient"""
