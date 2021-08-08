@@ -128,7 +128,7 @@ def run_trainer(arguments):
 
     """Setup of the model and optimizer parameters"""
     model           = unet().to(args.device)
-    optimizer       = torch.optim.SGD(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
+    optimizer       = torch.optim.Adam(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
     criterion       = select_loss(args.loss, args.prior, args.beta, args.gamma)
     
     if args.continue_training:
