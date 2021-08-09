@@ -251,7 +251,7 @@ class Trainer:
       pass
     
     state_dict = {
-      'epoch': self.epoch,
+      'epoch': self.epoch+ self.original_epoch,
       'model_state_dict': self.model.state_dict(),
       'optimizer_state_dict': self.optimizer.state_dict()
     }
