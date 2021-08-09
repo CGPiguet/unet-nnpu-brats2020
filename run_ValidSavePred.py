@@ -50,7 +50,7 @@ def process_args(arguments):
     parser.add_argument('--optimizer','-opti', type=str, default="SGD", choices=['SGD', 'Adam','AdaGrad'],
                         help='Selection of the optimizer')
     
-    parser.add_argument('--load_model', '-load_model', default = False, type= str,
+    parser.add_argument('--load_model', '-load_model', default= 'model_saved_Valid/epoch_3.pth', type= str,
                         help='Continue training')
     
     args = parser.parse_args(arguments)
@@ -58,6 +58,11 @@ def process_args(arguments):
     
     args.model_folder_name, args.name = os.path.split(args.load_model)
     args.path_to_last_model = args.load_model
+    
+    
+    # Prior
+    if args.prior is not None:
+        args.prior = torch.tensor(args.prior, dtype= torch.float)
     
 
     if args.preset == "nnPULoss":
@@ -84,18 +89,19 @@ def main(arguments):
     """ Get the dataloader"""
     args = process_args(arguments)
     train_data, valid_data = select_preprocess(args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
-    dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data, valid_data, args.preset, 1, True, args.num_worker, args.prior)
+    dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data, valid_data, args.preset, 1, True, 8, args.prior)
     _, valid_dataloader, args.prior = dataloader_data
     
     """Get model"""
     model           = unet().to(args.device)
     criterion       = select_loss(args.loss, args.prior, args.beta, args.gamma)
     model.load_state_dict(torch.load(args.path_to_last_model)['model_state_dict'])
-    epoch = torch.load(args.path_to_last_model)['original_epoch']
+    epoch = torch.load(args.path_to_last_model)['epoch']
     
     """Create folder to save the prediction"""        
     folder_name = 'RatioTrainValid {} RatioPosToNeg {} Epoch {}'.format(args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled, epoch)
     folder_path = os.path.join(args.model_folder_name,'ValidPredOnly', folder_name)
+    print(folder_path)
     try:
         os.mkdir(folder_path)
     except:
@@ -112,11 +118,11 @@ def main(arguments):
 
         loss, x_grad  = criterion(output.squeeze(), target.squeeze())
         loss_value    = loss.item()
-        loss_array.append(loss_value)
-        pred_array.append(output.detach().cpu())
+        # loss_array.append(loss_value)
+        # pred_array.append(output.detach().cpu().numpy())
         
-    save_name = os.path.join(folder_path, 'prediction.pth')    
-    torch.save(pred_array)
+        save_name = os.path.join(folder_path, 'prediction_' + str(i)+'.npy')    
+        np.save(save_name, output.detach().cpu().numpy())
 
     
     
