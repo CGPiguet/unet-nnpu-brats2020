@@ -14,7 +14,18 @@ from dataset2D import BCE_BraTS2020_Dataset_2D, PN_BraTS2020_Dataset_2D, PU_BraT
 from nnPULoss import PULoss
 from FocalLoss import BinaryFocalLossWithLogits
 
-def select_optimizer(optimizer_name, learning_rate, model):
+def select_optimizer(optimizer_name: str, learning_rate: float, model: nn.Module):
+    """Select and return the chosen optimizer.
+
+    Args:
+        optimizer_name (str): The optimizer name that help to select the optimizer in respect to the name.
+        learning_rate (float): Learning rate 
+        model (nn.Module): Model
+
+    Raises:
+        NotImplementedError: Raise an error if the optimizer name is not recognized.
+
+    """
     if optimizer_name == 'SGD':
         optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate,  weight_decay=0.005)
     elif optimizer_name == 'Adam':
