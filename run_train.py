@@ -56,7 +56,7 @@ def process_args(arguments):
                         help='Stepsize of gradient method')
     parser.add_argument('--out', '-o', default='model_saved_',
                         help='Directory to output the result')
-    parser.add_argument('--validation', '-v', default=False, type= str2bool,
+    parser.add_argument('--validation', '-v', default=True, type= str2bool,
                         help='Use of a validation dataset')
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default = True, type= str2bool,
                         help='Determine if a converted 2D Brats2020 must be used, if set to true, convert automatically')
