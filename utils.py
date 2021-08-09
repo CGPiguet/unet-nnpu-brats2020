@@ -158,6 +158,8 @@ def print_info_before_training(args):
     print("Device:\t {}".format(args.device))
     print("Preset:\t {}".format(args.preset))
     print("loss:\t {}".format(args.loss))
+    print("Optimizer:\t {}".format(args.optimizer))
+    
     print("")
     print("prior:\t {}".format(args.prior))
     print("beta from nnPULoss:\t {}".format(args.beta))
@@ -174,6 +176,6 @@ def print_info_before_training(args):
     print("Ratio to seperate data into train and validation dataset:\t {}".format(args.ratio_train_valid))
     print("Ratio of Positive voxel set as Neative:\t {}".format(args.ratio_Positive_set_to_Unlabeled))
     print("")
-    print("Model load: {}".format(args.path_to_last_model))
-    print("# of epoch of the loaded model: {}".format(args.original_epoch))
+    print("Model load:\t {}".format(args.path_to_last_model))
+    print("# of epoch of the loaded model:\t {}".format(args.original_epoch))
     print("")
