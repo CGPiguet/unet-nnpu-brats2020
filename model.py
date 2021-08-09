@@ -51,7 +51,7 @@ class unet(nn.Module):
                                   nn.ReLU(inplace=True),
                                   nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False),
                                   nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-nn.ReLU(inplace=True))
+                                  nn.ReLU(inplace=True))
     
     self.decoder3 = nn.Sequential(nn.Conv2d(512, 256, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False),
                                   nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
