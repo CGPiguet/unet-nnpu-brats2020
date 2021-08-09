@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 # Personal function
 from model import unet
 from trainer import Trainer
-from utils import select_preprocess, select_dataloader, select_loss, print_info_before_training
+from utils import select_optimizer, select_preprocess, select_dataloader, select_loss, print_info_before_training
 
 def process_args(arguments):
     parser = argparse.ArgumentParser(
@@ -50,6 +50,8 @@ def process_args(arguments):
     #                     help='The name of a loss function')
     # parser.add_argument('--nnPUloss', type=str, default="sigmoid", choices=['logistic', 'sigmoid'],
     #                     help='The name of a loss function used in nnPU')
+    parser.add_argument('--optimizer','-opti', type=str, default="SGD", choices=['SGD', 'Adam','AdaGrad'],
+                        help='Selection of the optimizer')
     parser.add_argument('--stepsize', '-s', default=1e-4, type=float,
                         help='Stepsize of gradient method')
     parser.add_argument('--out', '-o', default='model_saved_',
@@ -128,7 +130,7 @@ def run_trainer(arguments):
 
     """Setup of the model and optimizer parameters"""
     model           = unet().to(args.device)
-    optimizer       = torch.optim.Adam(model.parameters(), lr = args.stepsize,  weight_decay=0.005)
+    optimizer       = select_optimizer(args.optimizer, args.stepsize, model)
     criterion       = select_loss(args.loss, args.prior, args.beta, args.gamma)
     
     if args.continue_training:

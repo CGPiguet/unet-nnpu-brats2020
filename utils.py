@@ -14,6 +14,17 @@ from dataset2D import BCE_BraTS2020_Dataset_2D, PN_BraTS2020_Dataset_2D, PU_BraT
 from nnPULoss import PULoss
 from FocalLoss import BinaryFocalLossWithLogits
 
+def select_optimizer(optimizer_name, learning_rate, model):
+    if optimizer_name == 'SGD':
+        optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate,  weight_decay=0.005)
+    elif optimizer_name == 'Adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate,  weight_decay=0.005)
+    elif optimizer_name == 'AdaGrad':
+        optimizer = torch.optim.AdaGrad(model.parameters(), lr = learning_rate,  weight_decay=0.005)
+    else:
+        raise NotImplementedError('No optimizer found with the name: {}. Please select either SGD, Adam, AdaGrad'.format(optimizer_name))
+    return optimizer
+        
 def select_loss(loss_name: str, prior: float, beta: float, gamma: float)-> torch.nn.Module:
     """Simply select the loss between BCELossWithLogitsLoss, FocalLoss (deprecated) and nnPU Loss.
 
