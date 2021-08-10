@@ -12,7 +12,6 @@ __pycache__
 
 # Different test in Jupyter Lab
 dummy*.ipynb
-visualize.ipynb
 
 # Dataset.zip
 MICCAI_BraTS2020_TrainingData.zip
