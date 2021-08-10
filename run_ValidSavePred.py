@@ -25,7 +25,7 @@ def process_args(arguments):
                         help='Ratio between validation and training dataset')
     parser.add_argument('--ratio_Positive_set_to_Unlabeled', '-rpu', default=0.95, type=float,
                          help='Ratio of Positive class that will be set as Negative') 
-    parser.add_argument('--batchsize', '-b', type=int, default=16,
+    parser.add_argument('--batchsize', '-b', type=int, default=1,
                         help='Mini batch size')
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default = True, type= str2bool,
                         help='Determine if a converted 2D Brats2020 must be used, if set to true, convert automatically')
@@ -103,7 +103,7 @@ def main(arguments):
     folder_path = os.path.join(args.model_folder_name,'ValidPredOnly', folder_name)
     print(folder_path)
     try:
-        os.mkdir(folder_path)
+        os.makedirs(folder_path)
     except:
         pass
   
