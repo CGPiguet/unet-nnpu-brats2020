@@ -122,10 +122,10 @@ def main(arguments):
         # pred_array.append(output.detach().cpu().numpy())
         
         save_name = os.path.join(folder_path, 'PredTar_' + str(i)+'.pth')  
-        
+        original_target = data['original_target']
         file_to_save = {'output': output.squeeze().detach().cpu(), 
                         'target': target.squeeze().detach().cpu(),
-                        'original_target':target.squeeze().detach().cpu()}
+                        'original_target': original_target.squeeze().detach().cpu()}
         torch.save(file_to_save, save_name)
 
     
