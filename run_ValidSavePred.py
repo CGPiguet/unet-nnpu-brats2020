@@ -124,7 +124,8 @@ def main(arguments):
         save_name = os.path.join(folder_path, 'PredTar_' + str(i)+'.pth')  
         
         file_to_save = {'output': output.squeeze().detach().cpu(), 
-                        'target': target.squeeze().detach().cpu()}
+                        'target': target.squeeze().detach().cpu(),
+                        'original_target':target.squeeze().detach().cpu()}
         torch.save(file_to_save, save_name)
 
     
