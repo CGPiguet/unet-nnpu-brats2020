@@ -25,7 +25,7 @@ def process_args(arguments):
                         help='Ratio between validation and training dataset')
     parser.add_argument('--ratio_Positive_set_to_Unlabeled', '-rpu', default=0.95, type=float,
                          help='Ratio of Positive class that will be set as Negative') 
-    parser.add_argument('--batchsize', '-b', type=int, default=1,
+    parser.add_argument('--batchsize', '-b', type=int, default=16,
                         help='Mini batch size')
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default = True, type= str2bool,
                         help='Determine if a converted 2D Brats2020 must be used, if set to true, convert automatically')
@@ -50,7 +50,7 @@ def process_args(arguments):
     parser.add_argument('--optimizer','-opti', type=str, default="SGD", choices=['SGD', 'Adam','AdaGrad'],
                         help='Selection of the optimizer')
     
-    parser.add_argument('--load_model', '-load_model', default= 'model_saved_Valid/epoch_3.pth', type= str,
+    parser.add_argument('--load_model', '-load_model', type= str,
                         help='Continue training')
     
     args = parser.parse_args(arguments)
@@ -89,7 +89,7 @@ def main(arguments):
     """ Get the dataloader"""
     args = process_args(arguments)
     train_data, valid_data = select_preprocess(args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
-    dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data, valid_data, args.preset, 1, True, 8, args.prior)
+    dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data, valid_data, args.preset, args.batchsize, True, 8, args.prior)
     _, valid_dataloader, args.prior = dataloader_data
     
     """Get model"""
@@ -121,8 +121,11 @@ def main(arguments):
         # loss_array.append(loss_value)
         # pred_array.append(output.detach().cpu().numpy())
         
-        save_name = os.path.join(folder_path, 'prediction_' + str(i)+'.npy')    
-        np.save(save_name, output.detach().cpu().numpy())
+        save_name = os.path.join(folder_path, 'PredTar_' + str(i)+'.pth')  
+        
+        file_to_save = {'output': output.squeeze().detach().cpu(), 
+                        'target': target.squeeze().detach().cpu()}
+        torch.save(file_to_save, save_name)
 
     
     

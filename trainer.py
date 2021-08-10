@@ -211,6 +211,7 @@ class Trainer:
 
 
   def _dice_coef(self, output, target, smooth= 1):
+    assert(len(output.shape)==3)
     assert(output.shape == target.shape)
     if target.min() == -1:
       dice_output = torch.sign(output)
