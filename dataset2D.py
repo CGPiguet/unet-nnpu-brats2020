@@ -59,6 +59,21 @@ class PU_BraTS2020_Dataset_2D(Dataset):
             'unhealthy_slice': unhealthy_slice,
         })
         return data
+    
+    def get_prior(self) -> float:
+        p_total = 0
+        total   = 0
+        for data_path in self.path_to_data:
+            ground_truth_path   = os.path.join(data_path, 'seg.npy')
+            target              = np.load(ground_truth_path)
+            p_total += np.count_nonzero(target>0)
+            total   += target.size
+        prior = torch.tensor(p_total/total, dtype= torch.float)
+        return prior 
+            
+            
+            
+            
         
 
 class PN_BraTS2020_Dataset_2D(Dataset):
