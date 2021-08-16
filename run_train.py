@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 # Personal function
 from model import unet
 from trainer import Trainer
+from trainer_BCE import Trainer_BCE
 from utils import select_optimizer, select_preprocess, select_dataloader, select_loss, print_info_before_training
 
 def process_args(arguments):
@@ -179,7 +180,12 @@ def run_trainer(arguments):
         with redirect_stdout(f):
             print_info_before_training(args)
 
-    trainer = Trainer(**kwargs)
+    if args.loss = "BCELoss":
+        trainer = Trainer_BCE(**kwargs)
+    else:
+        trainer = Trainer(**kwargs)
+        
+    
     trainer.run_trainer()
 
     """Save results"""
