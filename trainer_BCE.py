@@ -9,6 +9,7 @@ import os
 import pandas as pd
 
 from sklearn import metrics
+from torch._C import LongStorageBase
 
 class Trainer_BCE:
   def __init__(self,
@@ -136,7 +137,7 @@ class Trainer_BCE:
       loss_value    = loss.item()
 
       train_losses.append(loss_value)
-      x_grad.backward() # one backward pass
+      loss.backward() # one backward pass
       self.optimizer.step() # update the parameters
 
       """Save prediction and target"""
