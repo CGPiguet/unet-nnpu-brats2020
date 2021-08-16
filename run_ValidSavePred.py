@@ -89,6 +89,8 @@ def main(arguments):
     """ Get the dataloader"""
     args = process_args(arguments)
     train_data, valid_data = select_preprocess(args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
+    print('Number of samples in training: {}'.format(len(train_data)))
+    print('Number of samples in validating: {}'.format(len(valid_data)))
     dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data, valid_data, args.preset, args.batchsize, True, 8, args.prior)
     _, valid_dataloader, args.prior = dataloader_data
     

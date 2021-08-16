@@ -124,6 +124,15 @@ def run_trainer(arguments):
     args = process_args(arguments)
 
     train_data, valid_data = select_preprocess(args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
+    
+    if args.Brats2020_is_2d:
+        print('Number of samples in training: {}'.format(len(train_data)))
+        print('Number of samples in validating: {}'.format(len(valid_data)))
+    else: 
+        print('Number of samples in training: {}'.format(len(train_data[0])))
+        print('Number of samples in validating: {}'.format(len(valid_data[0])))
+        
+    
 
     dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data,valid_data, args.preset, args.batchsize, args.validation, args.num_worker, args.prior)
     train_dataloader, valid_dataloader, args.prior = dataloader_data
