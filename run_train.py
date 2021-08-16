@@ -180,7 +180,7 @@ def run_trainer(arguments):
         with redirect_stdout(f):
             print_info_before_training(args)
 
-    if args.loss = "BCELoss":
+    if args.loss == "BCELoss":
         trainer = Trainer_BCE(**kwargs)
     else:
         trainer = Trainer(**kwargs)
