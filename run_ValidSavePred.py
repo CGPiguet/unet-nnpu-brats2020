@@ -51,7 +51,15 @@ def process_args(arguments):
                         help='Selection of the optimizer')
     
     parser.add_argument('--load_model', '-load_model', type= str,
-                        help='Continue training')
+                        help='Load the model with which to save the prediction')
+    
+    parser.add_argument('--image_modality', '-img_mode', default = "T1", type= str,
+                        choices=['T1','T1ce', 'T2', 'T2flair'],
+                        help="Preset of configuration\n"
+                             "T1: T1 image mode\n"
+                             "T1ce: T1ce image mode\n"
+                             "T2: T2 image mode\n"
+                             "T2flair: T2flair image mode\n")
     
     args = parser.parse_args(arguments)
     
@@ -88,7 +96,7 @@ def str2bool(v):
 def main(arguments):
     """ Get the dataloader"""
     args = process_args(arguments)
-    train_data, valid_data = select_preprocess(args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
+    train_data, valid_data = select_preprocess(args.image_modality, args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
     print('Number of samples in training: {}'.format(len(train_data)))
     print('Number of samples in validating: {}'.format(len(valid_data)))
     dataloader_data = select_dataloader(args.Brats2020_is_2d, train_data, valid_data, args.preset, args.batchsize, True, 8, args.prior)
@@ -125,7 +133,8 @@ def main(arguments):
         
         save_name = os.path.join(folder_path, 'PredTar_' + str(i)+'.pth')  
         original_target = data['original_target']
-        file_to_save = {'output': output.squeeze().detach().cpu(), 
+        file_to_save = {'input': input.squeeze().detach().cpu(),
+                        'output': output.squeeze().detach().cpu(), 
                         'target': target.squeeze().detach().cpu(),
                         'original_target': original_target.squeeze().detach().cpu()}
         torch.save(file_to_save, save_name)

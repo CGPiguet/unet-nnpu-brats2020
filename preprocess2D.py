@@ -31,6 +31,7 @@ def preprocess_brats2020_2D(img_mode: str, root_dir: str = 'MICCAI_BraTS2020_Tra
     with ratio of Positive pixel set as Unlabeled and the ratio to divide the dataset between the train and validation dataset. 
 
     Args:
+        img_mode (str): Define which image modality to load.
         root_dir (str): Path to the original BraTS2020 dataset. Defaults to 'MICCAI_BraTS2020_TrainingData'.
         ratio_train_valid (float): Ratio to divide the data between train and validation dataset. Defaults to 0.8.
         ratio_P_to_U (float): Ratio of Positive pixel set as Unlabaled in respect to PU Learning. Defaults to 0.95.
@@ -40,7 +41,7 @@ def preprocess_brats2020_2D(img_mode: str, root_dir: str = 'MICCAI_BraTS2020_Tra
     """
     new_rootdir = '2D_BraTS2020 RatioTrainValid ' + str(ratio_train_valid) +' RatioPosToNeg ' + str(ratio_P_to_U)
     if os.path.exists(new_rootdir):
-        print("2D BraTS2020 already present with:\n\tRatioTrainValid: {}\tRatioPosToNeg: {}".format(ratio_train_valid, ratio_P_to_U))
+        print("2D converted BraTS2020 already present with:\n\tRatioTrainValid: {}\tRatioPosToNeg: {}".format(ratio_train_valid, ratio_P_to_U))
     else:
         train_data, valid_data = preprocess_brats2020_3D('All_modality', root_dir, ratio_train_valid, ratio_P_to_U)
         os.mkdir(new_rootdir)
@@ -61,6 +62,7 @@ def retrieve_img_path_2D(img_mode: str, rootdir: os.path)-> list:
     """Retrieve the path to the 2D data folder
 
     Args:
+        img_mode (str): Define which image modality to load.
         rootdir (os.path): Path to the folder that contains the train and valid dataset
 
     Returns:

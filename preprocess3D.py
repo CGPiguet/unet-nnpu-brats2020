@@ -63,6 +63,7 @@ def get_img_path_from_folder(img_mode: str, path_list: list):
     """Return img path from each subject/sub-directory
 
     Args:
+        img_mode (str): Define which image modality to load.    
         path_list (list): list of path to each subject/sub-directory
 
     Returns:
@@ -248,6 +249,7 @@ def preprocess_brats2020_3D(img_mode: str, root_dir: str, ratio_train_valid: flo
     """General Function to get and preprocess the brats2020 dataset for PU learning
 
     Args:
+        img_mode (str): Define which image modality to load.
         root_dir (str): Root to the BraTS2020 
         ratio_train_valid (float, optional): Ratio to create train and valid dataset. Defaults to 0.8.
         ratio_P_to_U (float, optional): Ratio of P to be set as U. Defaults to 0.95.

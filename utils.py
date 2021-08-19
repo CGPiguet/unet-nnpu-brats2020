@@ -60,6 +60,7 @@ def select_preprocess(img_mode: str, Brats2020_is_2d: bool , root_dir: str, rati
     """Select the preprocess, between the 3D BraTS2020 dataset or the 2D converted BraTS2020.
 
     Args:
+        img_mode (str): Define the image modality that must be load.
         Brats2020_is_2d (bool): If set to True, use the converted 2D BraTS2020 dataset. If set to False, use the original 3D BraTS2020 dataset.
         root_dir (os.path): Directory of the BraTS2020 dataset
         ratio_train_valid (float): Ratio to divide the BraTS2020 dataset between train and validation dataset.
