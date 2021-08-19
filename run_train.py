@@ -63,12 +63,12 @@ def process_args(arguments):
                         help='Determine if a converted 2D Brats2020 must be used, if set to true, convert automatically')
     
     parser.add_argument('--image_modality', '-img_mode', default = "T1", type= str,
-                        choices=['T1','T1ce', 'T2', 'T2Flair'],
+                        choices=['T1','T1ce', 'T2', 'T2flair'],
                         help="Preset of configuration\n"
                              "T1: T1 image mode\n"
                              "T1ce: T1ce image mode\n"
                              "T2: T2 image mode\n"
-                             "T2Flair: T2Flair image mode\n")
+                             "T2flair: T2flair image mode\n")
     
 
     parser.add_argument('--continue_training', '-continue_training', default = False, type= str2bool,
