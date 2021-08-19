@@ -59,7 +59,7 @@ def split_data(list_dir: list, ratio: float = 0.8):
 
 
 
-def get_img_path_from_folder(path_list: list):
+def get_img_path_from_folder(img_mode: str, path_list: list):
     """Return img path from each subject/sub-directory
 
     Args:
@@ -77,16 +77,29 @@ def get_img_path_from_folder(path_list: list):
         file_dict.update({'id': subject_id})
 
         for file_name in os.listdir(folder_path):
-            if 't1.nii.gz' in file_name:
-                file_dict.update({'T1': os.path.join(folder_path,file_name)})
-            if 't1ce.nii.gz' in file_name:
-              file_dict.update({'T1ce': os.path.join(folder_path,file_name)})
-            if 't2.nii.gz' in file_name:
-              file_dict.update({'T2': os.path.join(folder_path,file_name)})
-            if 'flair.nii.gz' in file_name:
-              file_dict.update({'T2flair': os.path.join(folder_path,file_name)})
-            if 'seg.nii.gz' in file_name:
-                file_dict.update({'Seg': os.path.join(folder_path,file_name)})
+            """The else is used for converting the dataset into 2D"""
+            if img_mode != 'All_modality':
+                if 't1.nii.gz' in file_name and img_mode == 'T1':
+                    file_dict.update({'T1': os.path.join(folder_path,file_name)})
+                if 't1ce.nii.gz' in file_name and img_mode == 'T1ce':
+                    file_dict.update({'T1ce': os.path.join(folder_path,file_name)})
+                if 't2.nii.gz' in file_name and img_mode == 'T2':
+                    file_dict.update({'T2': os.path.join(folder_path,file_name)})
+                if 'flair.nii.gz' in file_name and img_mode == 'T2flair':
+                    file_dict.update({'T2flair': os.path.join(folder_path,file_name)})
+                if 'seg.nii.gz' in file_name:
+                    file_dict.update({'Seg': os.path.join(folder_path,file_name)})
+            else: 
+                if 't1.nii.gz' in file_name:
+                    file_dict.update({'T1': os.path.join(folder_path,file_name)})
+                if 't1ce.nii.gz' in file_name:
+                    file_dict.update({'T1ce': os.path.join(folder_path,file_name)})
+                if 't2.nii.gz' in file_name:
+                    file_dict.update({'T2': os.path.join(folder_path,file_name)})
+                if 'flair.nii.gz' in file_name:
+                    file_dict.update({'T2flair': os.path.join(folder_path,file_name)})
+                if 'seg.nii.gz' in file_name:
+                    file_dict.update({'Seg': os.path.join(folder_path,file_name)})
 
         data_list.append(file_dict)
     return data_list
@@ -231,7 +244,7 @@ def set_negative_data(vol_img: np.ndarray, percentage: float= 0.95):
     return positive_coordinate 
 
 
-def preprocess_brats2020_3D(root_dir: str, ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95):
+def preprocess_brats2020_3D(img_mode: str, root_dir: str, ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95):
     """General Function to get and preprocess the brats2020 dataset for PU learning
 
     Args:
@@ -252,8 +265,8 @@ def preprocess_brats2020_3D(root_dir: str, ratio_train_valid: float = 0.8, ratio
     train_subjects, valid_subjects = split_data(folder_path, ratio_train_valid)
     
     print('\tStep 3.\tGet img mode from all subject/folder')
-    train_list = get_img_path_from_folder(train_subjects)
-    valid_list = get_img_path_from_folder(valid_subjects)
+    train_list = get_img_path_from_folder(img_mode, train_subjects)
+    valid_list = get_img_path_from_folder(img_mode, valid_subjects)
     
     print('\tStep 4.\tGet which slice is unhealthy')
     unhealthy_train_slice = get_unhealthy_slice(train_list)

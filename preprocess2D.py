@@ -26,7 +26,7 @@ def process_args(arguments):
     return args
                     
 
-def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95)-> Tuple[list, list]:
+def preprocess_brats2020_2D(img_mode: str, root_dir: str = 'MICCAI_BraTS2020_TrainingData', ratio_train_valid: float = 0.8, ratio_P_to_U: float = 0.95)-> Tuple[list, list]:
     """Verify if a current 2D Brats2020 is currently present in the repertory, if not it converts it automatically
     with ratio of Positive pixel set as Unlabeled and the ratio to divide the dataset between the train and validation dataset. 
 
@@ -42,22 +42,22 @@ def preprocess_brats2020_2D(root_dir: str = 'MICCAI_BraTS2020_TrainingData', rat
     if os.path.exists(new_rootdir):
         print("2D BraTS2020 already present with:\n\tRatioTrainValid: {}\tRatioPosToNeg: {}".format(ratio_train_valid, ratio_P_to_U))
     else:
-        train_data, valid_data = preprocess_brats2020_3D(root_dir, ratio_train_valid, ratio_P_to_U)
+        train_data, valid_data = preprocess_brats2020_3D('All_modality', root_dir, ratio_train_valid, ratio_P_to_U)
         os.mkdir(new_rootdir)
         convert_BraTS2020_to_2D(new_rootdir, train_data, True, ratio_train_valid, ratio_P_to_U)    
         convert_BraTS2020_to_2D(new_rootdir, valid_data, False, ratio_train_valid, ratio_P_to_U) 
         
     for train_valid_dir in os.listdir(new_rootdir):
         if train_valid_dir == 'BraTS2020_Train':
-            train_data = retrieve_img_path_2D(os.path.join(new_rootdir, train_valid_dir))
+            train_data = retrieve_img_path_2D(img_mode, os.path.join(new_rootdir, train_valid_dir))
         elif train_valid_dir == 'BraTS2020_Valid':
-            valid_data = retrieve_img_path_2D(os.path.join(new_rootdir, train_valid_dir))
+            valid_data = retrieve_img_path_2D(img_mode, os.path.join(new_rootdir, train_valid_dir))
         else:
             raise NotImplementedError("Not implemented name folder. Should expect BraTS2020_Train or BraTS2020_Valid but got: {}".format(train_valid_dir))
 
     return train_data, valid_data
 
-def retrieve_img_path_2D(rootdir: os.path)-> list:
+def retrieve_img_path_2D(img_mode: str, rootdir: os.path)-> list:
     """Retrieve the path to the 2D data folder
 
     Args:
@@ -75,20 +75,12 @@ def retrieve_img_path_2D(rootdir: os.path)-> list:
             modedir_path = os.path.join(subjectdir_path ,modedir)
             if not os.path.isdir(modedir_path):
                 continue
-            #//TODO Toggle comment to use mode of choice 
-            # elif modedir == 'T1':
-            #     continue
-            elif modedir == 'T1ce':
-                continue
-            elif modedir == 'T2':
-                continue
-            elif modedir == 'T2flair':
-                continue
-            for slicedir in os.listdir(modedir_path):
-                slicedir_path = os.path.join(modedir_path, slicedir)
-                if not os.path.isdir(slicedir_path):
-                    continue
-                data.append(slicedir_path)       
+            elif modedir == img_mode:
+                for slicedir in os.listdir(modedir_path):
+                    slicedir_path = os.path.join(modedir_path, slicedir)
+                    if not os.path.isdir(slicedir_path):
+                        continue
+                    data.append(slicedir_path)       
     return data
 
 def convert_BraTS2020_to_2D(root_dir: str, data_tuple: tuple, train: bool, ratio_train_valid: float, ratio_P_to_U: float)->None:

@@ -56,7 +56,7 @@ def select_loss(loss_name: str, prior: float, beta: float, gamma: float)-> torch
         loss_fn = BinaryFocalLossWithLogits(reduction='mean')
     return loss_fn
 
-def select_preprocess(Brats2020_is_2d: bool , root_dir: str, ratio_train_valid: float, ratio_Positive_set_to_Unlabeled: float) -> Tuple[list, list]:
+def select_preprocess(img_mode: str, Brats2020_is_2d: bool , root_dir: str, ratio_train_valid: float, ratio_Positive_set_to_Unlabeled: float) -> Tuple[list, list]:
     """Select the preprocess, between the 3D BraTS2020 dataset or the 2D converted BraTS2020.
 
     Args:
@@ -69,10 +69,10 @@ def select_preprocess(Brats2020_is_2d: bool , root_dir: str, ratio_train_valid: 
         Tuple[list, list]: Returns two list for training and validation data
     """    
     if Brats2020_is_2d:
-        train_data, valid_data = preprocess_brats2020_2D(root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
+        train_data, valid_data = preprocess_brats2020_2D(img_mode, root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
 
     else:
-        train_data, valid_data = preprocess_brats2020_3D(root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
+        train_data, valid_data = preprocess_brats2020_3D(img_mode, root_dir, ratio_train_valid, ratio_Positive_set_to_Unlabeled)
     return train_data, valid_data
 
 
@@ -170,6 +170,7 @@ def print_info_before_training(args):
     print("Preset:\t {}".format(args.preset))
     print("loss:\t {}".format(args.loss))
     print("Optimizer:\t {}".format(args.optimizer))
+    print("Image modality:\t {}".format(args.image_modality))
     
     print("")
     print("prior:\t {}".format(args.prior))

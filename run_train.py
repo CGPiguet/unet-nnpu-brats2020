@@ -61,6 +61,15 @@ def process_args(arguments):
                         help='Use of a validation dataset')
     parser.add_argument('--Brats2020_is_2d', '-2dBrats', default = True, type= str2bool,
                         help='Determine if a converted 2D Brats2020 must be used, if set to true, convert automatically')
+    
+    parser.add_argument('--image_modality', '-img_mode', default = "T1", type= str,
+                        choices=['T1','T1ce', 'T2', 'T2Flair'],
+                        help="Preset of configuration\n"
+                             "T1: T1 image mode\n"
+                             "T1ce: T1ce image mode\n"
+                             "T2: T2 image mode\n"
+                             "T2Flair: T2Flair image mode\n")
+    
 
     parser.add_argument('--continue_training', '-continue_training', default = False, type= str2bool,
                         help='Continue training')
@@ -124,7 +133,7 @@ def run_trainer(arguments):
     print("\nTrainer setup\n")
     args = process_args(arguments)
 
-    train_data, valid_data = select_preprocess(args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
+    train_data, valid_data = select_preprocess(args.image_modality, args.Brats2020_is_2d, args.rootdir, args.ratio_train_valid, args.ratio_Positive_set_to_Unlabeled)
     
     if args.Brats2020_is_2d:
         print('Number of samples in training: {}'.format(len(train_data)))
@@ -132,6 +141,8 @@ def run_trainer(arguments):
     else: 
         print('Number of samples in training: {}'.format(len(train_data[0])))
         print('Number of samples in validating: {}'.format(len(valid_data[0])))
+        
+    
         
     
 
