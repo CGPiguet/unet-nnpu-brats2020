@@ -14,7 +14,7 @@ __pycache__
 dummy*.ipynb
 visualize.ipynb
 DiceThreshold.ipynb
-
+ComputeRiskWithBraTS.ipynb
 # Dataset.zip
 MICCAI_BraTS2020_TrainingData.zip
 2D_BraTS2020*
