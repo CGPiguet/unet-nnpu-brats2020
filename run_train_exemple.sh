@@ -16,6 +16,6 @@ eval "$(conda shell.bash hook)"
 conda activate unet
 
 
-srun python run_train.py  -n "Exemple" -pr 0.5 -s 0.001 -e 100 -opti "SGD" -img_mode "T1" -continue_training True
+srun python run_train.py  -n "Exemple" -pr 0.5 -s 0.001 -e 1 -opti "SGD" -img_mode "T1" -continue_training True
 
  

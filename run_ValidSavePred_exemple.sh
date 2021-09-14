@@ -16,4 +16,4 @@ eval "$(conda shell.bash hook)"
 conda activate unet
 
 
-srun python run_ValidSavePred.py  -load_model "model_saved_Exemple/epoch_100_checkpoint.pth"
+srun python run_ValidSavePred.py  -load_model "model_saved_Exemple/epoch_1.pth"
